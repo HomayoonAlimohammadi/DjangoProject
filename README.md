@@ -827,7 +827,10 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-%j7o149-csvr6y(-_qy!g
 DEBUG = str(os.environ.get('DEBUG')) == '1'
 
 # what domains you want to allow this server to run with
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ENV_ALLOWED_HOST=  os.environ.get('DJANGO_ALLOWED_HOST') or None
+ALLOWED_HOSTS = []
+if ENV_ALLOWED_HOST is not None:
+    ALLOWED_HOSTS = [ENV_ALLOWED_HOST]
 ```
 - now let's make a .env file in the root Project folder (next to manage.py) in order to maintain environment variables in it.
 - put the required environment variables in .env file:
@@ -865,8 +868,59 @@ def main():
         print('No .env file found. Make sure to add it.')
         # This is the  default thing that Django does in case of none existance
 ```
+## Session 32:
+- let's get our django project to be deployed on app platform. 
+- getting it live on digital oceans app platform
+- head to the like below:  https://www.codingforentrepreneurs.com/blog/prepare-django-for-digital-ocean-app-platform
+- let's do whatever is in that site.
+- add these to requrements.txt:
+```python
+gunicorn # For productin purposes
+psycopg2-binary # PostgreSQL
+```
+- add a runtime.txt next to requirements.txt
+```python
+python-3.8.10
+```
+- how to create SECRET_KEY ?
+1. in the shell run, it will print out a password for you and you can copy and paste it in your .env file:  
+    ```python
+    python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'  
+    ```
+2. ```python
+    import uuid
+    print(uuid.uuid4())
+    ```
+- copy and paste PostgreSQL data in your settings.py, under the DATABASE variable:
+```python
+POSTGRES_DB = os.environ.get("POSTGRES_DB") # database name
+POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD") # database password
+POSTGRES_USER = os.environ.get("POSTGRES_USER") # database username
+POSTGRES_HOST = os.environ.get("POSTGRES_HOST") # database host
+POSTGRES_PORT = os.environ.get("POSTGRES_PORT") # database port
 
+POSTGRES_READY = (
+    POSTGRES_DB is not None
+    and POSTGRES_PASSWORD is not None
+    and POSTGRES_USER is not None
+    and POSTGRES_HOST is not None
+    and POSTGRES_PORT is not None
+)
 
-
+if POSTGRES_READY:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": POSTGRES_DB,
+            "USER": POSTGRES_USER,
+            "PASSWORD": POSTGRES_PASSWORD,
+            "HOST": POSTGRES_HOST,
+            "PORT": POSTGRES_PORT,
+        }
+    }
+```
+- it's really good to have the same database in development than in production, but here we won't head to PostgreSQL.
+- now you can use git and jump to the deploy in digital ocean either blogpost or video.
+- but in the next part we will check out basics of git and learn how to deploy our projects in git.
 
 
