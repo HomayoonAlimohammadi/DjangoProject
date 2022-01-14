@@ -810,3 +810,63 @@ def login_view(request):
 <h3><a href='../'>Back to Home</a></h3>
 {% endblock content %} 
 ```
+## Session 31:
+- Development environment and Production environment
+- SECRET_KEY and DEBUG are essential for development but shouldn't be altered in production.
+- here we introduce .env file (manage environment variables)
+- environment variables allow you to inject varaibles and settings or data that maybe you don't wanna hard code in somewhere like settings.py.
+- .env uses key:value pairs
+- so let's head to TryDjano/settings.py:
+```python
+import os
+
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-%j7o149-csvr6y(-_qy!g1^-*@=!@86ja1(bu1hsh^bqk&!4m*') # SECRET_KEY from .env file or the default one
+
+# this should be False in case of production, not development
+# makes the page not found more classic and detail-less
+DEBUG = str(os.environ.get('DEBUG')) == '1'
+
+# what domains you want to allow this server to run with
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+```
+- now let's make a .env file in the root Project folder (next to manage.py) in order to maintain environment variables in it.
+- put the required environment variables in .env file:
+```env
+SECRET_KEY = <whatever>
+DEBUG = 1
+```
+- now let's install dotenv package
+- <b> Note that django-dotenv is required. python-dotenv is not</b>
+```cmd
+pip install django-dotenv
+```
+- now let's load .env file in manage.py:
+```python
+import dotenv
+
+def main():
+    dotenv.read_dotenv()
+    ...
+```
+- now re-run the server
+- now you can changes environment variables (inject them)
+- after changing any of the environment variables, you have to re-run the server.
+- if the .env file doesn't exist it will show you a user warning this way.
+- what if you wanted to put .env in a different path?
+- head to manage.py
+```python
+import pathlib
+
+def main():
+    DOT_ENV_PATH = pathlib.Path() / '.env'
+    if DOT_ENV_PATH.exists():
+        dotenv.read_dotenv(str(DOT_ENV_PAHT))
+    else:
+        print('No .env file found. Make sure to add it.')
+        # This is the  default thing that Django does in case of none existance
+```
+
+
+
+
+
