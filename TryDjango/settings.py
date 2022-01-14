@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,13 +21,18 @@ print(f'{BASE_DIR=}')
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-%j7o149-csvr6y(-_qy!g1^-*@=!@86ja1(bu1hsh^bqk&!4m*'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-%j7o149-csvr6y(-_qy!g1^-*@=!@86ja1(bu1hsh^bqk&!4m*')
+# Secret key must be available, it can't be None
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = str(os.environ.get('DEBUG')) == '1' # 1 == True
+# Make sure to turn DEBUG to False for production
 
+# what  domain names you want to allow this server to run with
 ALLOWED_HOSTS = []
-
+if not DEBUG:
+    ALLOWED_HOSTS += os.environ.get('ALLOWED_HOST')
 
 # Application definition
 # python manage.py makemigrations
