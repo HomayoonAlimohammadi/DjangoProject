@@ -21,7 +21,7 @@ print(f'{BASE_DIR=}')
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-%j7o149-csvr6y(-_qy!g1^-*@=!@86ja1(bu1hsh^bqk&!4m*')
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-%j7o149-csvr6y(-_qy!g1^-*@=!@86ja1(bu1hsh^bqk&!4m*')
 # Secret key must be available, it can't be None
 
 
@@ -30,9 +30,10 @@ DEBUG = str(os.environ.get('DEBUG')) == '1' # 1 == True
 # Make sure to turn DEBUG to False for production
 
 # what  domain names you want to allow this server to run with
+ENV_ALLOWED_HOST=  os.environ.get('DJANGO_ALLOWED_HOST') or None
 ALLOWED_HOSTS = []
-if not DEBUG:
-    ALLOWED_HOSTS += os.environ.get('ALLOWED_HOST')
+if ENV_ALLOWED_HOST is not None:
+    ALLOWED_HOSTS = [ENV_ALLOWED_HOST]
 
 # Application definition
 # python manage.py makemigrations
@@ -90,6 +91,32 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+POSTGRES_DB = os.environ.get("POSTGRES_DB") # database name
+POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD") # database password
+POSTGRES_USER = os.environ.get("POSTGRES_USER") # database username
+POSTGRES_HOST = os.environ.get("POSTGRES_HOST") # database host
+POSTGRES_PORT = os.environ.get("POSTGRES_PORT") # database port
+
+POSTGRES_READY = (
+    POSTGRES_DB is not None
+    and POSTGRES_PASSWORD is not None
+    and POSTGRES_USER is not None
+    and POSTGRES_HOST is not None
+    and POSTGRES_PORT is not None
+)
+
+if POSTGRES_READY:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": POSTGRES_DB,
+            "USER": POSTGRES_USER,
+            "PASSWORD": POSTGRES_PASSWORD,
+            "HOST": POSTGRES_HOST,
+            "PORT": POSTGRES_PORT,
+        }
+    }
 
 
 # Password validation
