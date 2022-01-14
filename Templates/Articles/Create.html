@@ -1,0 +1,22 @@
+{% extends 'Base.html' %}
+
+{% block title %}
+<h1>{{obj.title}}</h1>
+{% endblock %}
+
+{% block content %}
+{% if not created %}
+
+
+<form method='POST'>
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <button type='Submit'>Create Article</button>
+</form>
+<h3><a href='../../'>Back to Home</a></h3>
+{% else %}
+<h3>Your article was created!</h3>
+<a href='../{{ object.id }}'>Go to Article</a>
+{% endif %}
+{% endblock %}

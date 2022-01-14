@@ -1,0 +1,20 @@
+{% extends 'Base.html' %}
+
+
+{% block title %}
+<h1>Search</h1>
+<form action=''>
+    <input type='text' name='q' />
+    <input type='submit' />
+</form>
+{% if obj %}
+<h1>{{obj.title}}</h1>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+{% if obj %}
+<p>{{obj.content}}</p>
+{% endif %}
+<h3><a href='../'>Back to Home</a></h3>
+{% endblock %}

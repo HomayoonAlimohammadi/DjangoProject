@@ -1,0 +1,23 @@
+{% extends 'Base.html' %}
+
+{% block title %}
+<h1>{{title}}</h1>
+<h2><a href='articles/'>Go to Search</a></h2>
+<h3><a href='articles/create/'>Create Article</a></h3>
+<h3><a href='admin/'>Go to Admin</a></h3>
+<h3><a href='login/'>Login</a></h3>
+<h3><a href='register/'>Register</a></h3>
+{% endblock title %}
+
+{% block content %} 
+<h3>{{content}}</h3>
+<p>{% for x in object_list %}
+    {% if x.title != '' %}
+<li><a href='/articles/{{x.id}}/'>{{x.title}} - {{x.content}}</a></li>
+{% endif %}
+{% endfor %}
+</p>
+
+
+
+{% endblock content %}
