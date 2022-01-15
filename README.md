@@ -922,5 +922,57 @@ if POSTGRES_READY:
 - it's really good to have the same database in development than in production, but here we won't head to PostgreSQL.
 - now you can use git and jump to the deploy in digital ocean either blogpost or video.
 - but in the next part we will check out basics of git and learn how to deploy our projects in git.
+## Session 33:
+- "pwd" inside a folder
+- use the command below to initialize git in that directory (entire folder)
+```cmd
+git init
+```
+other commands in git:
+```python
+git status # status of files in that directory
+git add main.py # track a specific file (like makemigrations and migrate!!!)
+git commit -m 'New Update' # commit tracked files and -m for message
+git diff main.py # shows change between the last commit and current version
+git log # see all commits that you made 
+```
+- to revert a commit:
+```python
+git log # copy the commit code (very long code in front of a specific 'commit')
+git reset <code> --hard # reset the commit to the last version
+```
+- but in VSCode you can just ctrl+z and commit that again.
+```python
+# make a directory and cd to that in shell
+git clone <github source repository> . # . is to clone the repository in the directory you are currently in
+# you will have all the commit history via git status
+git pull # get the most recent change from git
+# downloading zipfile from github instead of git pull won't give you commit history with git status
+```
+- .gitignore is a file that make sure certain files and folders are not tracked
+- if you delete .git file from a folder, it means that you are disconnecting that directory from git.
+- so what to do if you deleted .git file but wanted git back?
+- delete the folder and clone (same steps) again.
+    - you won't be able to clone again in that directory without deleting it at first. because it says that the directory is not empty.
+- if you wanted to add an already existing directory to a fresh git repository:
+    - make a brand new empty repository in github.com
+    - delete the .git file from the folder if it exists
+    ```python
+    git init
+    git remote add origin <repository url>
+    git add --all # or git add . (same meaning)
+    git commit -m 'Initial commit or whatever!'
+    ```
+```python
+git remote # the hosts that you are going to push code to (hence remote not local)
+got remote -v 
+git remote add github <exact same repository link>
+git remote -v # notice that it's name is changed from origin to github (most common is the default origin)
+git push ogirin main
+git remote remove origin
+git remote remove github
+git remote add origin
+git push origin main
+```
 
-
+    
