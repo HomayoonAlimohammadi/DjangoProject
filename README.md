@@ -974,5 +974,22 @@ git remote remove github
 git remote add origin
 git push origin main
 ```
+- so just for a recap, the main commands are:
+```python
+mkdir
+git init
+git remote add origin 
+# commands above are like one time per project
+git add .
+git commit -m 'Your message'
+git push origin main
+# these three commands are going to be done several times
+# and some handy commands
+git status
+git log
+git diff
+git log
+```
+- note that you might be on branch master or main. when i did it, it was master, so if you faced an error, it's maybe because you need to git push origin master
+## Session 34:
 
-    
