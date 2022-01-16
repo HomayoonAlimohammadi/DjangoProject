@@ -992,4 +992,4 @@ git log
 ```
 - note that you might be on branch master or main. when i did it, it was master, so if you faced an error, it's maybe because you need to git push origin master
 ## Session 34:
-
+- deploy our project into production using digital ocean platform
