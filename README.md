@@ -998,3 +998,37 @@ git log
     - kubenetes
     - database port
     - migration
+## Session 35:
+- automated test, how to run it? here is a built-in way: 
+```python
+python manage.py test
+```
+- runs a test on the whole project
+- what is worth testing?
+- <b>SERCRET_KEY</b> for example
+- catatrophic errors won't be missed since they cause the server to crash and will be noticed easily.
+- but problems like <b>very bad secret_key</b> is not something that causes an error, what to to?
+- in your configuration folder (Project/TryDjango) create tests.py:
+```python
+import os
+from django.test import TestCase
+# or do this for getting secret key
+from django.conf import settings
+from django.contrib.auth.password_validation import validate_password
+
+
+class TryDjangoConfigTest(TestCase):
+    # all the methods have to start with test_<anything> 
+    # Checkout python unittest > TestCase for more info
+    def test_secret_key_strength(self):
+        # get the secret key
+        SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+        # another way: SECRET_KEY = settings.SECRET_KEY
+        # how to make sure the password is good?
+        try:
+            is_strong = validate_password(SECRET_KEY)
+        except Exception as e:
+            msg = f'Weak SECRET_KEY {e.messages}'
+            self.fail(msg) # what message to fail with
+```
+- be aware of <b>Test Driven Development</b> which basically says you should run tests from the beginning. this might make you to design specifically to pass the test, which is not good. as a beginner don't mind about test from the beginning.
