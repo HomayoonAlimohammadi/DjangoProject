@@ -1099,3 +1099,30 @@ title = models.CharField(max_length = 100)
     # add a Slug, to use instead of the model id in the url
     slug = models.SlugField(blank=True, null=True)
 ```
+- now how to turn any title or string in a slugified item?
+- go into the python shell:
+```python
+python manage.py shell
+from django.utils.text import slugify
+slugify('Hello world this is amazing! cool! @#$@^@')
+>>> 'hello-world-this-is-amazing-cool'
+```
+- how are we going to create a slugfield?
+- let's overwrite the save method in the Article Model.
+```python:
+from django.utils.text import slugify
+
+class Article(models.Model):
+    ...
+
+    def save(self, *args, **kwargs):
+        # let's change somethings 
+        # and add this if in order to change the slug ever after the title was created (with the model)
+        if self.slug is None:
+            self.slug = slugify(self.title)
+        super.save(*args, **kwargs)
+```
+- overwritting the save() method is not always recommended.
+- now the problem is what if we have the same title or almost exact titles for some models? the slugs and so the urls would be the same which is not good at all!
+- up to now, we didn't implement this slugified title in the urls did we? :/
+

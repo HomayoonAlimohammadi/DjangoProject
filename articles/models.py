@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.utils.text import slugify
 
 # Create your models here.
 
@@ -25,3 +26,10 @@ class Article(models.Model):
     # just comment the field commmand and makemigrations and migrate > it is deleted!
     '''for changing a field, simply remove it (by commenting) and re add the altered one'''
     
+    def save(self, *args, **kwargs):
+        # let's change somethings and change the properties of the .save()
+
+        # with this if, slug can be changes regardless of the title
+        if self.slug is None:
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
