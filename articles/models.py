@@ -7,6 +7,8 @@ class Article(models.Model):
     # put CharField() for title to set max_character length
     # head to the Django Model-field-types
     title = models.CharField(max_length = 100) 
+    # add a Slug, to use instead of the model id in the url
+    slug = models.SlugField(blank=True, null=True)
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
     # auto_now: whenever the model is saved is going to be saved

@@ -1051,8 +1051,7 @@ python manage.py makemigrations
 python manage.py migrate
 ```
 - makemigrations is telling django to be prepared for a database change
-- in deployment (production) this is a "Job" 
-## Session 37:
+- in deployment (production) this is a "Job"
 - making changes to model fields
 - in the articles/models.py:
 ```python
@@ -1091,4 +1090,12 @@ class ArticleAdmin(admin.ModelAdmin):
     search_fields = ['title', 'content', 'id']
 
 admin.site.register(Article, ArticleAdmin)
+```
+## Session 37:
+- in a common website, instead of model id in the url, you are more likely to see a 'Slug'. 
+- inside the articles/models.py add this under the 'title' variable:
+```python
+title = models.CharField(max_length = 100) 
+    # add a Slug, to use instead of the model id in the url
+    slug = models.SlugField(blank=True, null=True)
 ```
