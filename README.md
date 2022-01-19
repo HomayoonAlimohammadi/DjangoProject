@@ -1216,4 +1216,33 @@ def article_post_save(sender, instance, created, *args, **kwargs):
 post_save.connect(article_post_save, sender=Article)
 ```
 - the problem here is that we have multiple instances of the same slug again! what to do??, next episode :))
+## Session 40:
+- Auto generate new slugs
+- let's use recusion, head to the articles/models.py:
+```python
+import random
 
+class Article(models.Model):
+    slug = models.SlugField(unique=True, blank=True, null=True)
+    ...
+
+
+def slugify_instance_title(instance, save=False, new_slug=None):
+    if new_slug is not None:
+        slug = new_slug
+    else:
+        slug = slugify(instance.title)
+    CLASS = instance.__class__
+    qs = CLASS.objects.filter(slug=slug).exclude(id=instance.id)
+    if qs.exists():
+        rand_int = random.randint(300_000, 500_000) # adding randomness
+        slug = f'{slug}-{rand_int}'
+        return slugify_instance_title(instance, save=save, new_slug=slug)
+    instance.slug = slug
+    if save:
+        instance.save()
+    return instance
+```
+- this way we are adding some kind of randomness.
+- how to make exact numbers of the times the slug is repeated instead of this random?
+- let's bring slugify_instance_title() to utils.py and done!
