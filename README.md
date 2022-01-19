@@ -1125,4 +1125,33 @@ class Article(models.Model):
 - overwritting the save() method is not always recommended.
 - now the problem is what if we have the same title or almost exact titles for some models? the slugs and so the urls would be the same which is not good at all!
 - up to now, we didn't implement this slugified title in the urls did we? :/
+## Session 38:
+- what are 'Signals'?
+- in the articles/models.py:
+```python
+from django.db.models.signals import pre_save, post_save
+
+# what signals do is essentially the same as the .save() method we customized.
+class Article(models.Model):
+    ...
+    def save(self, *args, **kwargs):
+        super.save(*args, **kwargs)
+    
+def article_pre_save(sender, instance, *args, **kwargs):
+    if instance.slug is None:
+        instance.slug = slugify(instance.title)
+
+pre_save.connect(article_pre_save, sender=Article)
+
+def article_post_save(sender, instance, created, *args, **kwargs):
+    if created:
+        instance.slug = 'my slug'
+        # or you can say: instance.slug = slugify(instance.title)
+
+        # pre_save and post_save are being called before and after each save, so calling instance.save() inside post_save function won't actually make an infinite loop??
+        instance.save()
+
+post_save.connect(article_post_save, sender=Article)
+```
+- let's improve our slug rather than something fixed or even slugified title. 
 
