@@ -36,18 +36,27 @@ class Article(models.Model):
         #     self.slug = slugify(self.title)
         super().save(*args, **kwargs)
 
+def slugify_instance_title(instance, save=False):
+    slug = slugify(instance.title)
+    qs = Article.objects.filter(slug=slug).exclude(id=instance.id)
+    # the exclude method is useful when u want to edit the same article, cause u don't want the current instance's slug to be included in the query
+    if qs.exists():
+        slug = f'{slug}-{qs.count()+1}'
+    instance.slug = slug
+    if save:
+        instance.save()
+    return instance
+
 
 def article_pre_save(sender, instance, *args, **kwargs):
-    print('pre_save')
     if instance.slug is None:
-        instance.slug = slugify(instance.title)
+        slugify_instance_title(instance)
 
 pre_save.connect(article_pre_save, sender=Article)
 
 def article_post_save(sender, instance, created, *args, **kwargs):
-    print('post_save')
+    # we write this if to prevent recursion
     if created:
-        instance.slug = 'my slug'
-        instance.save()
+        slugify_instance_title(instance, save=True)
 
 post_save.connect(article_post_save, sender=Article)

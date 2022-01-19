@@ -1144,6 +1144,7 @@ def article_pre_save(sender, instance, *args, **kwargs):
 pre_save.connect(article_pre_save, sender=Article)
 
 def article_post_save(sender, instance, created, *args, **kwargs):
+    # we use this if to prevent recursion
     if created:
         instance.slug = 'my slug'
         # or you can say: instance.slug = slugify(instance.title)
@@ -1154,4 +1155,65 @@ def article_post_save(sender, instance, created, *args, **kwargs):
 post_save.connect(article_post_save, sender=Article)
 ```
 - let's improve our slug rather than something fixed or even slugified title. 
+## Session 39:
+- let's create unique slugs
+- we have to use django query sets and lookups
+- then we have to change our views from using ids to using slugs (the main purpose of slugs)
+```python
+python manage.py shell
+from articles.models import Article
+
+obj = Article.objects.get(slug='my slug')
+# query sets
+qs = Article.objects.all()
+qs.count()
+len(qs)
+# .count() is more efficient cause it's django specific
+# let's see if a slug exists in the database
+qs = Article.objects.filter(slug='hello-world')
+qs # this will return all articles with this slug
+qs = Article.objects.filter(slug='hello-world').filter(title='Hello world')
+# to make it case insensitive
+qs = Article.objects.filter(title__iexist='Hello World')
+
+
+# and this one is case sensitive
+qs = Article.objects.filter(title__exist='Hello World')
+
+# or whether it contains (not being the exact same)
+qs = Article.objects.filter(title__contain='Hello World') # case sensitive
+qs = Article.objects.filter(title__icontain='Hello World') # case insensitive
+
+# this is called querying the database
+```
+- let's change the articles/models.py a bit:
+```python
+
+def slugify_instance_title(instance, save=False):
+    slug = slugify(instance.title)
+    qs = Article.objects.filter(slug=slug).exclude(id=instance.id)
+    # the exclude method is useful when u want to edit the same article, cause u don't want the current instance's slug to be included in the query
+    if qs.exists():
+        slug = f'{slug}-{qs.count()+1}'
+    instance.slug = slug
+    if save:
+        instance.save()
+    return instance
+
+def article_pre_save(sender, instance, *args, **kwargs):
+    print('pre_save')
+    if instance.slug is None:
+        slugify_instance_title(instance)
+
+pre_save.connect(article_pre_save, sender=Article)
+
+def article_post_save(sender, instance, created, *args, **kwargs):
+    print('post_save')
+    # we write this if to prevent recursion
+    if created:
+        slugify_instance_title(instance, save=True)
+
+post_save.connect(article_post_save, sender=Article)
+```
+- the problem here is that we have multiple instances of the same slug again! what to do??, next episode :))
 
