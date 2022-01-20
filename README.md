@@ -1431,5 +1431,40 @@ class Article(models.Model):
 <li><a href='{{ x.get_absolute_url }}'>{{x.title}} - {{x.content}}</a></li>
 ```
 - this is a more robust way to declare dynamic urls. hence it's not perfect yet.
+## Session 45:
+- Django URLs Reverse
+- you can use 'name' argument in path in the urls.py in order to address the urls easier later.
+```python
+path('articles/create/', article_create_view, name='article-create'),
+path('articles/<slug:slug>/', article_detail_view, name='article-detail')
+```
+- and in the HomeView.html:
+``` html
+<h3><a href='{% url "article-create" %}'>Create Article</a></h3>
+```
+- and in the articles/models.py:
+```python
+class Article(models.Model):
+    ...
 
+    def get_absolute_url(self):
+            # return f'/articles/{self.slug}/'
+            return reverse('article-detail', kwargs={'slug':self.slug})
+```
+- and in the articles/views.py:
+```python
+@login_required
+def article_create_view(request):
+    form = ArticleForm(request.POST or None)
+    context = {
+        'form': form
+    }
+    if form.is_valid():
+        article_obj = form.save()
+        context['form'] = ArticleForm() # we can put (request.POST or None)
+        context['object'] = article_obj
+        context['created'] = True
+        return redirect('article-detail', slug=article_obj.slug)
+    return render(request, 'articles/Create.html', context=context)
+```
 

@@ -3,6 +3,7 @@ from django.db import models
 from django.utils import timezone
 from django.db.models.signals import pre_save, post_save
 from articles.utils import slugify_instance_title
+from django.urls import reverse
 
 # Create your models here.
 
@@ -29,7 +30,8 @@ class Article(models.Model):
     '''for changing a field, simply remove it (by commenting) and re add the altered one'''
     
     def get_absolute_url(self):
-        return f'/articles/{self.slug}/'
+        # return f'/articles/{self.slug}/'
+        return reverse('article-detail', kwargs={'slug':self.slug})
 
     def save(self, *args, **kwargs):
         # let's change somethings and change the properties of the .save()

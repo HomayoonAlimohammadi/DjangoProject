@@ -1,6 +1,6 @@
 from http.client import HTTPS_PORT
 from django.contrib.auth import login
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from articles.models import Article
 from articles.forms import ArticleForm 
@@ -53,6 +53,7 @@ def article_create_view(request):
         context['form'] = ArticleForm() # we can put (request.POST or None)
         context['object'] = article_obj
         context['created'] = True
+        return redirect('article-detail', slug=article_obj.slug)
     return render(request, 'articles/Create.html', context=context)
 
 # Reference!
