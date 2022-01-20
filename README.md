@@ -1415,5 +1415,21 @@ def article_detail_view(request, slug=None):
 ```html
 <li><a href='/articles/{{x.slug}}/'>{{x.title}} - {{x.content}}</a></li>
 ```
+## Session 44:
+- get absolute url method
+- the goal is to make the dynamic url based of of the instance itself, not being hard-coded
+- so head to the articles/models.py:
+```python
+class Article(models.Model):
+    ...
+
+    def get_absolute_url(self):
+        return f'/articles/{self.slug}'
+```
+- and in the HomeView.html:
+```html
+<li><a href='{{ x.get_absolute_url }}'>{{x.title}} - {{x.content}}</a></li>
+```
+- this is a more robust way to declare dynamic urls. hence it's not perfect yet.
 
 

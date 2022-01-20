@@ -28,6 +28,9 @@ class Article(models.Model):
     # just comment the field commmand and makemigrations and migrate > it is deleted!
     '''for changing a field, simply remove it (by commenting) and re add the altered one'''
     
+    def get_absolute_url(self):
+        return f'/articles/{self.slug}/'
+
     def save(self, *args, **kwargs):
         # let's change somethings and change the properties of the .save()
 
