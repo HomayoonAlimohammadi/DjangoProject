@@ -13,7 +13,7 @@
 <h3>{{content}}</h3>
 <p>{% for x in object_list %}
     {% if x.title != '' %}
-<li><a href='/articles/{{x.id}}/'>{{x.title}} - {{x.content}}</a></li>
+<li><a href='/articles/{{x.slug}}/'>{{x.title}} - {{x.content}}</a></li>
 {% endif %}
 {% endfor %}
 </p>

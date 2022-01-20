@@ -1,8 +1,10 @@
+from http.client import HTTPS_PORT
 from django.contrib.auth import login
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from articles.models import Article
 from articles.forms import ArticleForm 
+from django.http import Http404  
 
 def article_search_view(request):
     query_dict = request.GET
@@ -22,10 +24,19 @@ def article_search_view(request):
     }
     return render(request, 'articles/search.html', context=context)
 
-def article_detail_view(request, id=None):
+def article_detail_view(request, slug=None):
     article_obj = None
-    if id is not None:
-        article_obj = Article.objects.get(id=id)
+    if slug is not None:
+        try:
+            article_obj = Article.objects.get(slug=slug)
+        except Article.DoesNotExist:
+            raise Http404
+
+        # this shouldn't be even a case! but just to be sure
+        except Article.MultipleObjectsReturned:
+            article_obj = Article.objects.filter(slug=slug).first()
+        except:
+            raise Http404
     context = {
         'obj' : article_obj
     }

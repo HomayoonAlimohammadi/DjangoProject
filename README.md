@@ -1383,4 +1383,37 @@ class ArticleTestCase(TestCase):
         self.assertEqual(len(slug_list), len(unique_slug_list))
 ```
 - one of the ways to facilitate test process, is to create all the articles once in a persistant database, a testing database which is a stand alone. which is not in the scope of thie tutorial.
+## Session 43:
+- slugs in dynamic urls finally!
+- head to the TryDjano/urls.py and change this line only:
+```python
+path('articles/<slug:slug>/', article_detail_view),
+```
+- now head to the articles/views.py and change this function:
+```python
+from django.http import Http404  
+
+def article_detail_view(request, slug=None):
+    article_obj = None
+    if slug is not None:
+        try:
+            article_obj = Article.objects.get(slug=slug)
+        except Article.DoesNotExist:
+            raise Http404
+
+        # this shouldn't be even a case! but just to be sure
+        except Article.MultipleObjectsReturned:
+            article_obj = Article.objects.filter(slug=slug).first()
+        except:
+            raise Http404
+    context = {
+        'obj' : article_obj
+    }
+    return render(request, 'Articles/Detail.html', context = context)
+```
+- now let's go to Templates/HomeView.html and just change this line of code:
+```html
+<li><a href='/articles/{{x.slug}}/'>{{x.title}} - {{x.content}}</a></li>
+```
+
 
