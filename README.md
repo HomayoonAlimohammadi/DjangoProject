@@ -1467,4 +1467,19 @@ def article_create_view(request):
         return redirect('article-detail', slug=article_obj.slug)
     return render(request, 'articles/Create.html', context=context)
 ```
-
+- or better to say:
+```python
+@login_required
+def article_create_view(request):
+    form = ArticleForm(request.POST or None)
+    context = {
+        'form': form
+    }
+    if form.is_valid():
+        article_obj = form.save()
+        context['form'] = ArticleForm() # we can put (request.POST or None)
+        context['object'] = article_obj
+        context['created'] = True
+        return redirect(article_obj.get_absolute_url())
+    return render(request, 'articles/Create.html', context=context)
+```

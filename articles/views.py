@@ -53,7 +53,7 @@ def article_create_view(request):
         context['form'] = ArticleForm() # we can put (request.POST or None)
         context['object'] = article_obj
         context['created'] = True
-        return redirect('article-detail', slug=article_obj.slug)
+        return redirect(article_obj.get_absolute_url())
     return render(request, 'articles/Create.html', context=context)
 
 # Reference!
