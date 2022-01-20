@@ -1,11 +1,12 @@
 from django.test import TestCase
 from articles.models import Article
 from django.utils.text import slugify
-# Create your tests here.
+from articles.utils import slugify_instance_title
+
 
 class ArticleTestCase(TestCase):
     def setUp(self):
-        self.number_of_articles = 5
+        self.number_of_articles = 500
         for i in range(0, self.number_of_articles):
             Article.objects.create(title='Hello world', content='Something Random')
 
@@ -31,3 +32,19 @@ class ArticleTestCase(TestCase):
             slug = obj.slug
             slugified_title = slugify(title)
             self.assertNotEqual(slug, slugified_title)
+
+    def test_slugify_instance_title(self):
+        obj = Article.objects.all().last()
+        new_slugs = []
+        for i in range(25):
+            instance = slugify_instance_title(obj, save=False)
+            new_slugs.append(instance.slug)
+
+        unique_slugs = list(set(new_slugs))
+        self.assertEqual(len(new_slugs), len(unique_slugs))
+
+    def test_slugify_instance_title_redux(self):
+        # make a list after a queryset
+        slug_list = Article.objects.all().values_list('slug', flat=True)
+        unique_slug_list = list(set(slug_list))
+        self.assertEqual(len(slug_list), len(unique_slug_list))
