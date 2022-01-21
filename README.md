@@ -1483,3 +1483,63 @@ def article_create_view(request):
         return redirect(article_obj.get_absolute_url())
     return render(request, 'articles/Create.html', context=context)
 ```
+## Session 46:
+- complex search using djdango query lookup
+- we want to show querysets in the search result instead of a unique result
+- so let's go to articles/views.py:
+```python
+from django.db.models import Q
+# this is for Query Lookup
+
+def article_search_view(request):
+    query = request.GET.get('q')
+    # qs = Query Set
+    qs = Article.objects.all()
+    if query is not None:
+        lookups = Q(title__icontains=query) | Q(content__icontains=query)
+        qs = Article.objects.filter(lookups)
+
+    context = {
+        'obj_list': qs
+    }
+    return render(request, 'articles/search.html', context=context)
+```
+- and so the Templates/Articles/search.html:
+```html
+{% extends 'Base.html' %}
+
+
+{% block title %}
+<h1>Search</h1>
+<form action=''>
+    <input type='text' name='q' />
+    <input type='submit' />
+</form>
+<ol>
+{% for obj in obj_list %} 
+    {% if obj.title %}
+    <li><h4><a href="{{obj.get_absolute_url}}">{{obj.title}}</a></h4></li>
+    {% endif %}
+{% endfor %} 
+</ol>
+{% endblock %}
+<!-- 
+{% block content %}
+{% if obj %}
+<p>{{obj.content}}</p>
+{% endif %}
+<h3><a href='../'>Back to Home</a></h3>
+{% endblock %} -->
+```
+- you can change Query lookups with "|", like this:
+```python
+first_lookup = Q(title__icontains='hi')
+second_lookup = Q(title__icontains='hi') | Q(content__icontains='how')
+# the second lookup aggregates both results A U B
+# "|" is for "or", "&" is for "and"
+```
+- but the better way to have something like this:
+```python
+qs = Article.objects.search(query)
+# bound to the model itself rather than the views
+```

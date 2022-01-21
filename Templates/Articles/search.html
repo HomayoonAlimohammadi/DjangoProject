@@ -7,14 +7,18 @@
     <input type='text' name='q' />
     <input type='submit' />
 </form>
-{% if obj %}
-<h1>{{obj.title}}</h1>
-{% endif %}
+<ol>
+{% for obj in obj_list %} 
+    {% if obj.title %}
+    <li><h4><a href="{{obj.get_absolute_url}}">{{obj.title}}</a></h4></li>
+    {% endif %}
+{% endfor %} 
+</ol>
 {% endblock %}
-
+<!-- 
 {% block content %}
 {% if obj %}
 <p>{{obj.content}}</p>
 {% endif %}
 <h3><a href='../'>Back to Home</a></h3>
-{% endblock %}
+{% endblock %} -->
