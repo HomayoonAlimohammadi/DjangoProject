@@ -1543,3 +1543,86 @@ second_lookup = Q(title__icontains='hi') | Q(content__icontains='how')
 qs = Article.objects.search(query)
 # bound to the model itself rather than the views
 ```
+## Session 47:
+- Model Managers and Custom QuerySets for Search
+- we have to overwrite our Article.objects 
+- so in order to do that, in the articles/models.py:
+```python
+from django.db.models import Q
+
+class ArticleManager(models.Manager):
+    def search(self, query):
+        lookup = Q(title__icontains=query) | Q(content__icontains=query)
+        return Article.objects.filter(lookup)
+```
+- and in the articles/views.py:
+```python
+def article_search_view(request):
+    query = request.GET.get('q')
+    # qs = Query Set
+    qs = Article.objects.all()
+    if query is not None:
+        lookups = Q(title__icontains=query) | Q(content__icontains=query)
+        # qs = Article.objects.filter(lookups)
+
+        qs = Article.objects.search(query)
+
+    context = {
+        'obj_list': qs
+    }
+    return render(request, 'articles/search.html', context=context)
+```
+- or to make it useable across other models:
+```python
+
+class ArticleManager(models.Manager):
+    def search(self, query):
+        lookups = Q(title__icontains=query) | Q(content_icontains=query)
+        return self.get_queryset().filter(lookups)
+```
+- and change models.py:
+```python
+class ArticleManager(models.Manager):
+    def search(self, query=None):
+        if query is None or query =='':
+            return self.get_queryset().none()
+        lookups = Q(title__icontains=query) | Q(content__icontains=query)
+        return self.get_queryset().filter(lookups)
+```
+- and views.py:
+```python
+def article_search_view(request):
+    query = request.GET.get('q')
+    qs = Article.objects.search(query)
+
+    context = {
+        'obj_list': qs
+    }
+    return render(request, 'articles/search.html', context=context)
+```
+- and implement your own get_queryset() and another layer or filtering:
+```python
+class ArticleQuerySet(models.QuerySet):
+    def search(self, query=None):
+        if query is None or query =='':
+            return self.none()
+        lookups = Q(title__icontains=query) | Q(content__icontains=query)
+        return self.filter(lookups)
+
+class ArticleManager(models.Manager):
+    def get_queryset(self):
+        return ArticleQuerySet(self.model, using=self._db)
+
+    def search(self, query=None):
+        return self.get_queryset().search(query=query)
+```
+now by doing this, writing a code like below will be possible:
+```python
+lookup = #something
+qs = Article.objects.filter(title__icontains='hello').search(lookup)
+# if we don't implement the code in the cell above we will get this error by the line above:
+>>> 'QuerySet' object has no attribute 'search'
+```
+
+
+

@@ -4,8 +4,23 @@ from django.utils import timezone
 from django.db.models.signals import pre_save, post_save
 from articles.utils import slugify_instance_title
 from django.urls import reverse
+from django.db.models import Q
 
 # Create your models here.
+
+class ArticleQuerySet(models.QuerySet):
+    def search(self, query=None):
+        if query is None or query =='':
+            return self.none()
+        lookups = Q(title__icontains=query) | Q(content__icontains=query)
+        return self.filter(lookups)
+
+class ArticleManager(models.Manager):
+    def get_queryset(self):
+        return ArticleQuerySet(self.model, using=self._db)
+
+    def search(self, query=None):
+        return self.get_queryset().search(query=query)
 
 class Article(models.Model):
     # put CharField() for title to set max_character length
@@ -29,6 +44,8 @@ class Article(models.Model):
     # just comment the field commmand and makemigrations and migrate > it is deleted!
     '''for changing a field, simply remove it (by commenting) and re add the altered one'''
     
+    objects = ArticleManager()
+
     def get_absolute_url(self):
         # return f'/articles/{self.slug}/'
         return reverse('article-detail', kwargs={'slug':self.slug})
