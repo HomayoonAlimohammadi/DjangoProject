@@ -1623,6 +1623,21 @@ qs = Article.objects.filter(title__icontains='hello').search(lookup)
 # if we don't implement the code in the cell above we will get this error by the line above:
 >>> 'QuerySet' object has no attribute 'search'
 ```
+## Session 48:
+- add a test article search manager
+- add this to the articles/tests.py:
+```python
+class ArticleTestCase(TestCase):
+    ...
+
+    def test_article_search_manager(self):
+            qs = Article.objects.search(query='hello world')
+            self.assertEqual(qs.count(), self.number_of_articles)
+            qs = Article.objects.search(query='hello')
+            self.assertEqual(qs.count(), self.number_of_articles)
+            qs = Article.objects.search(query='something random')
+            self.assertEqual(qs.count(), self.number_of_articles)
+```
 
 
 
