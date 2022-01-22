@@ -1638,6 +1638,43 @@ class ArticleTestCase(TestCase):
             qs = Article.objects.search(query='something random')
             self.assertEqual(qs.count(), self.number_of_articles)
 ```
-
-
-
+## Session 49:
+- associate a user with an article
+- basic data connection with foreign keys
+- so let's head to the articles/models.py:
+```python
+class Article(models.Model):
+    # link a user to an article
+    user = models.ForeignKey('auth.User', blank=True, null=True, on_delete=models.SET_NULL)
+    ...
+```
+- and for some nice front end! let's head to templates/articles/details.html:
+```html
+{% block content %}
+<p>{{obj.content}}</p>
+<p>Author: {{ obj.user }}</p>
+```
+- but this is not a good way, so what to do?
+- you can add this line to models.py:
+```python
+from django.conf import settings
+User = settings.AUTH_USER_MODEL
+class Article(models.Model):
+    # link a user to an article
+    user = models.ForeignKey(User, blank=True, null=True, on_delete=models.SET_NULL)
+    ...
+```
+- but interestingly, if you try to makemigrations, you will find out that no changes were made, in fact django by default sets the user as:
+```python
+migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+        ('articles', '0011_alter_article_slug')
+```
+- now you can do this to filter you objects based of of users:
+```shell
+python manage.py shell
+from articles.models import Article
+qs = Article.objects.filter(user__username='pazz')
+qs 
+>>> <ArticleQuerySet [<Article: Article object (XX)>]>
+```
+- it's just a way to do query with these user models.

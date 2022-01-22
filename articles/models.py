@@ -5,8 +5,10 @@ from django.db.models.signals import pre_save, post_save
 from articles.utils import slugify_instance_title
 from django.urls import reverse
 from django.db.models import Q
+from django.conf import settings
 
 # Create your models here.
+
 
 class ArticleQuerySet(models.QuerySet):
     def search(self, query=None):
@@ -22,7 +24,12 @@ class ArticleManager(models.Manager):
     def search(self, query=None):
         return self.get_queryset().search(query=query)
 
+User = settings.AUTH_USER_MODEL
+
 class Article(models.Model):
+    # link a user to an article
+    user = models.ForeignKey(User, blank=True, null=True, on_delete=models.SET_NULL)
+
     # put CharField() for title to set max_character length
     # head to the Django Model-field-types
     title = models.CharField(max_length = 100) 
