@@ -1740,3 +1740,121 @@ INSTALLED_APPS = [
 ]
 ```
 - now makemigrations and migrate
+## Session 51:
+- Admin inlines for foreign keys
+- head to the recipes/admin.py:
+```python
+from django.contrib import admin
+from recipes.models import Recipe, RecipeIngredients
+
+admin.site.register(RecipeIngredients)
+
+class RecipeIngredientInline(admin.StackedInline):
+    model = RecipeIngredients
+    extra = 0 # how many RecipeIngredients you want to have right of the bat in any recipe
+    fields = ['name', 'quantity', 'unit', 'directions'] # which features you want there to be shown
+
+class RecipeAdmin(admin.ModelAdmin):
+    inlines = [RecipeIngredientInline]
+    list__display = ['name', 'user'] # features to be shown in admin/Recipes
+    readonly_fields = ['timestamp', 'updated'] # features that are readonly in each recipe page
+    raw_id_fields = ['user'] # make this feature a raw id field, so getting rid of the enormous drop down menu
+
+admin.site.register(Recipe, RecipeAdmin)
+```
+- let's change it to this:
+```python
+from django.contrib.auth import get_user_model
+from django.contrib import admin
+from recipes.models import Recipe, RecipeIngredients
+
+admin.site.register(RecipeIngredients)
+
+User = get_user_model()
+
+class UserInline(admin.TabularInline):
+    model = User
+
+class RecipeIngredientInline(admin.StackedInline):
+    model = RecipeIngredients
+    extra = 0 # how many RecipeIngredients you want to have right of the bat in any recipe
+    fields = ['name', 'quantity', 'unit', 'directions'] # which features you want there to be shown
+
+class RecipeAdmin(admin.ModelAdmin):
+    inlines = [UserInline, RecipeIngredientInline]
+    list__display = ['name', 'user'] # features to be shown in admin/Recipes
+    readonly_fields = ['timestamp', 'updated'] # features that are readonly in each recipe page
+    raw_id_fields = ['user'] # make this feature a raw id field, so getting rid of the enormous drop down menu
+
+admin.site.register(Recipe, RecipeAdmin)
+```
+- it gives an error, 'auth.User' has no ForeignKey to 'recipes.Recipe'
+- it's because the hierarchy of these foreignkeys
+- instead of tabular inline for the user, we have to tabularinline for the recipe (?!?!?!)
+```python
+from django.contrib.auth import get_user_model
+from django.contrib import admin
+from recipes.models import Recipe, RecipeIngredients
+
+admin.site.register(RecipeIngredients)
+
+User = get_user_model()
+
+class RecipeInline(admin.StackedInline):
+    model = Recipe
+    extra = 0
+
+class UserAdmin(admin.ModelAdmin):
+    list_display = ['username']
+    inlines = [RecipeInline]
+
+admin.site.register(User, UserAdmin)
+
+class RecipeIngredientInline(admin.StackedInline):
+    model = RecipeIngredients
+    extra = 0 # how many RecipeIngredients you want to have right of the bat in any recipe
+    fields = ['name', 'quantity', 'unit', 'directions'] # which features you want there to be shown
+
+class RecipeAdmin(admin.ModelAdmin):
+    inlines = [UserInline, RecipeIngredientInline]
+    list__display = ['name', 'user'] # features to be shown in admin/Recipes
+    readonly_fields = ['timestamp', 'updated'] # features that are readonly in each recipe page
+    raw_id_fields = ['user'] # make this feature a raw id field, so getting rid of the enormous drop down menu
+
+admin.site.register(Recipe, RecipeAdmin)
+```
+- now it gives an error: the model User is already registered with 'auth.UserAdmin'
+- we have to do this:
+```python
+from django.contrib.auth import get_user_model
+from django.contrib import admin
+from recipes.models import Recipe, RecipeIngredients
+
+admin.site.register(RecipeIngredients)
+User = get_user_model()
+admin.site.unregister(User)
+
+class RecipeInline(admin.StackedInline):
+    model = Recipe 
+    extra = 0
+ 
+class UserAdmin(admin.ModelAdmin):
+    list_display = ['username']
+    inlines = [RecipeInline]
+
+admin.site.register(User, UserAdmin)
+
+class RecipeIngredientInline(admin.StackedInline):
+    model = RecipeIngredients
+    extra = 0 # how many RecipeIngredients you want to have right of the bat in any recipe
+    fields = ['name', 'quantity', 'unit', 'directions'] # which features you want there to be shown
+
+class RecipeAdmin(admin.ModelAdmin):
+    inlines = [RecipeIngredientInline]
+    list__display = ['name', 'user'] # features to be shown in admin/Recipes
+    readonly_fields = ['timestamp', 'updated'] # features that are readonly in each recipe page
+    raw_id_fields = ['user'] # make this feature a raw id field, so getting rid of the enormous drop down menu
+
+admin.site.register(Recipe, RecipeAdmin)
+```
+- ok so this session was somehow crazy, let's master it with practice later.
