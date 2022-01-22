@@ -1858,3 +1858,16 @@ class RecipeAdmin(admin.ModelAdmin):
 admin.site.register(Recipe, RecipeAdmin)
 ```
 - ok so this session was somehow crazy, let's master it with practice later.
+## Session 52:
+- understanding relationships between models via tests
+- in models.py we referrence user model like this:
+```python
+from django.conf import settings
+user = settings.AUTH_USER_MODEL
+```
+- everywhere else if we need to use User model do this:
+```python
+from django.contrib.auth import get_user_model
+User = get_user_model()
+```
+
