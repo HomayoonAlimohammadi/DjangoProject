@@ -1,7 +1,9 @@
 from webbrowser import get
+from wsgiref import validate
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from recipes.models import Recipe, RecipeIngredients
+from django.core.exceptions import ValidationError
 
 User = get_user_model()
 
@@ -71,5 +73,29 @@ class RecipeTestCase(TestCase):
         ids = user.recipe_set.all().values_list('id', flat=True)
         qs = RecipeIngredients.objects.filter(recipe__id__in=ids)
         self.assertEqual(qs.count(), 1)
+
+    def test_unit_measure_validation_error(self):
+        invalid_unit = ['nada', 'something random']
+        with self.assertRaises(ValidationError):
+            for unit in invalid_unit:
+                ingredient = RecipeIngredients(
+                    name = 'New',
+                    quantity = 10,
+                    recipe = self.recipe_a,
+                    unit = unit
+                )
+                ingredient.full_clean()
+                # simillar to form.is_valid()
+    
+    def test_unit_measure_validation(self):
+        invalid_unit = 'grams'
+        ingredient = RecipeIngredients(
+            name = 'New',
+            quantity = 10,
+            recipe = self.recipe_a,
+            unit = invalid_unit
+        )
+        ingredient.full_clean()
+        # simillar to form.is_valid()
     
     

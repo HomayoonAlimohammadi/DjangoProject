@@ -1982,3 +1982,35 @@ def validate_unit_of_measure(value):
     except:
         raise ValidationError(f'{value} is not a valid unit of measure')
 ```
+## Session 54:
+- test custom model validation exception
+- head to recipes/tests.py:
+```python
+class RecipeTestCase(TestCase):
+    ...
+
+    def test_unit_measure_validation_error(self):
+        invalid_unit = 'something random'
+        with self.assertRaises(ValidationError):
+            ingredient = RecipeIngredients(
+                name = 'New',
+                quantity = 10,
+                recipe = self.recipe_a,
+                unit = invalid_unit
+            )
+            ingredient.full_clean()
+            # simillar to form.is_valid()
+    
+    def test_unit_measure_validation(self):
+        invalid_unit = 'grams'
+        ingredient = RecipeIngredients(
+            name = 'New',
+            quantity = 10,
+            recipe = self.recipe_a,
+            unit = invalid_unit
+        )
+        ingredient.full_clean()
+        # simillar to form.is_valid()
+```
+- in the future we can add a field for automated units. an API service or parser that somebody can put down a unit, and that parser or API creates that unit for us.
+
