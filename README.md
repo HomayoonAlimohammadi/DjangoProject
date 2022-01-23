@@ -1870,4 +1870,84 @@ user = settings.AUTH_USER_MODEL
 from django.contrib.auth import get_user_model
 User = get_user_model()
 ```
+- in the tests.py add this:
+```python
+from webbrowser import get
+from django.test import TestCase
+from django.contrib.auth import get_user_model
+from recipes.models import Recipe
 
+User = get_user_model()
+
+class UserTestCase(TestCase):
+    def setUp(self):
+        self.user_a = User.objects.create_user('pazzo', password='1991')
+        
+    def test_user_pw(self):
+        checked = self.user_a.check_password("1991")
+        self.assertTrue(checked)
+
+
+class RecipeTestCase(TestCase):
+    def setUp(self):
+        self.user_a = User.objects.create_user('pazzo', password='1991')
+        self.recipe_a = Recipe.objects.create(
+            name = 'Grilled Chicken',
+            user = self.user_a
+        )
+
+    def test_user_count(self):
+        qs = User.objects.all()
+        self.assertEqual(qs.count(), 1)
+    
+    def test_user_recipe_reverse_count(self):
+        user = self.user_a
+        # user.<model_name>_set (giving the query set for that model)
+        qs = user.recipe_set.all()
+        self.assertEqual(qs.count(), 1)
+```
+- notice that here user creation in separate classes doesn't add up.
+- let's add recipe_forward_count:
+```python
+class RecipeTestCase(TestCase):
+    ...
+    def test_user_recipe_forward_count(self):
+            user = self.user_a
+            qs = Recipe.objects.filter(user=user)
+            self.assertEqual(qs.count(), 1)
+```
+- and let's do recipeingredient counts + some two level relations:
+```python
+class RecipeTestCase(TestCase):
+    ...
+    
+    def test_user_recipe_ingredient_reverse_count(self):
+        recipe = self.recipe_a
+        qs = recipe.recipeingredients_set.all()
+        self.assertEqual(qs.count(), 1)
+
+    def test_user_recipe_ingredient_forward_count(self):
+        recipe = self.recipe_a
+        qs = RecipeIngredients.objects.filter(recipe=recipe)
+        self.assertEqual(qs.count(), 1)
+
+    def test_user_two_level_relation(self):
+        user = self.user_a
+        recipe = self.recipe_a
+        # recipe__user is a two level relation 
+        # why can't you write user__recipe=recipe? maybe because the hierarchy?
+        qs = RecipeIngredients.objects.filter(recipe__user=user)
+        self.assertEqual(qs.count(), 1)
+
+    def test_user_two_level_reverse_relation(self):
+        user = self.user_a
+        recipeingredient_ids = user.recipe_set.all().values_list('recipeingredients', flat=True)
+        # qs = RecipeIngredients.objects.filter(recipe__user=user)
+        self.assertEqual(recipeingredient_ids.count(), 1)
+
+    def test_user_two_level_relation_via_recipes(self):
+        user = self.user_a
+        ids = user.recipe_set.all().values_list('id', flat=True)
+        qs = RecipeIngredients.objects.filter(recipe__id__in=ids)
+        self.assertEqual(qs.count(), 1)
+```

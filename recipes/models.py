@@ -24,5 +24,5 @@ class RecipeIngredients(models.Model):
     active = models.BooleanField(default=True)
 
 
-# class RecipeImages():
+# class RecipeIngredientImages():
 #     recipe = models.ForeignKey(Recipe)
