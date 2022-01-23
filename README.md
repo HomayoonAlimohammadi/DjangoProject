@@ -1951,3 +1951,34 @@ class RecipeTestCase(TestCase):
         qs = RecipeIngredients.objects.filter(recipe__id__in=ids)
         self.assertEqual(qs.count(), 1)
 ```
+## Session 53:
+- custom validation for unit measurements
+- let's create a new python file in recipes/validators.py:
+```python
+from django.core.exceptions import ValidationError
+
+# instead of this custom list, use Pint
+valid_unit_measurements = ['pounds', 'lbs', 'oz', 'gram']
+
+def validate_unit_of_measure(value):
+    if value not in valid_unit_measurements:
+        raise ValidationError(f'{value} is not a valid unit of measure!')
+```
+- let's install "pint" and then do these:
+```python
+from django.core.exceptions import ValidationError
+import pint
+from pint.errors import UndefinedUnitError
+
+# instead of this custom list, use Pint
+valid_unit_measurements = ['pounds', 'lbs', 'oz', 'gram']
+
+def validate_unit_of_measure(value):
+    ureg = pint.UnitRegistry()
+    try:
+        single_unit = ureg[value]
+    except UndefinedUnitError as e:
+        raise ValidationError(f'{e}')
+    except:
+        raise ValidationError(f'{value} is not a valid unit of measure')
+```
