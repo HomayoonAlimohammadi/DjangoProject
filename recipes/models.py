@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from recipes.validators import validate_unit_of_measure
+from recipes.utils import number_str_to_float
 
 
 class Recipe(models.Model):
@@ -17,6 +18,7 @@ class RecipeIngredients(models.Model):
     name = models.CharField(max_length=220)
     description = models.TextField(blank=True, null=True)
     quantity = models.CharField(max_length=50) # 1 1/4, ... which are not int or float
+    quantity_as_float = models.FloatField(blank=True, null=True)
     # lbs, oz, gram, ...
     unit = models.CharField(max_length=50, validators=[validate_unit_of_measure]) 
     directions = models.TextField(blank=True, null=True)
@@ -24,6 +26,16 @@ class RecipeIngredients(models.Model):
     updated = models.DateTimeField(auto_now=True)
     active = models.BooleanField(default=True)
 
+    # it's good to overwrite save method when it's automatically generating a field from another field
+    # like slugs from title and quantity as float from quantity
+    def save(self, *args, **kwargs):
+        qty = self.quantity
+        qty_as_float, qty_as_float_success = number_str_to_float(qty)
+        if qty_as_float_success:
+            self.quantity_as_float = qty_as_float
+        else:
+            self.quantity_as_float = None
+        super().save(*args, **kwargs)
 
 # class RecipeIngredientImages():
 #     recipe = models.ForeignKey(Recipe)

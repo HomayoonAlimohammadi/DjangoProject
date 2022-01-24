@@ -9,7 +9,8 @@ User = get_user_model()
 class RecipeIngredientInline(admin.StackedInline):
     model = RecipeIngredients
     extra = 0 # how many RecipeIngredients you want to have right of the bat in any recipe
-    fields = ['name', 'quantity', 'unit', 'directions'] # which features you want there to be shown
+    readonly_fields = ['quantity_as_float']
+    fields = ['name', 'quantity', 'unit', 'directions', 'quantity_as_float'] # which features you want there to be shown
 
 class RecipeAdmin(admin.ModelAdmin):
     inlines = [RecipeIngredientInline]

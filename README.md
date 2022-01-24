@@ -2013,4 +2013,62 @@ class RecipeTestCase(TestCase):
         # simillar to form.is_valid()
 ```
 - in the future we can add a field for automated units. an API service or parser that somebody can put down a unit, and that parser or API creates that unit for us.
+## Session 55:
+- we want a field which auto set quantity as a float
+- so head to the recipes/models.py:
+```python
+class RecipeIngredients(models.Model):
+    ...
+    quantity_as_float = models.FloatField(blank=True, null=True)
+```
+- now make a new utils.py file in recipes/:
+```python
+from fractions import Fraction
 
+def number_str_to_float(amount_str):
+    success = False
+    number_as_float = amount_str
+    try:
+        number_as_float = float(sum(Fraction(s) for s in f'{amount_str}'.split()))
+    except:
+        pass
+    if isinstance(number_as_float, float):
+        success = True
+    return number_as_float, success
+
+```
+- now we want to make it auto set from self.quantity
+- it's nice to overwrite the save() method when a field is automatically being generated from another field
+- again in the recipes/models.py:
+```python
+class RecipeIngredients(models.Model):
+    ...
+
+    # it's good to overwrite save method when it's automatically generating a field from another field
+    # like slugs from title and quantity as float from quantity
+    def save(self, *args, **kwargs):
+        qty = self.quantity
+        qty_as_float, qty_as_float_success = number_str_to_float(qty)
+        if qty_as_float_success:
+            self.quantity_as_float = qty_as_float
+        else:
+            self.quantity_as_float = None
+        super().save(*args, **kwargs)
+```
+- don't forget to makemigrations and migrate
+- now let's make it readonly so no one can change it
+- when you write a new feature to a model specially, you want to test it
+- head to recipes/tests.py:
+```python
+class RecipeTestCase(TestCase):
+    ...
+    def test_quantity_as_float(self):
+        self.assertIsNotNone(self.recipe_ingredient_a.quantity_as_float)
+        self.assertIsNone(self.recipe_ingredient_b.quantity_as_float)
+```
+- if you do this:
+```shell
+from recipes.models import *
+RecipeIngredients.objects.create(recipe=r, name='Hello There', quantity='21', unit='abc')
+```
+- this will create a recipe ingredient even tho the unit is invalid. why??!
