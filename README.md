@@ -2111,3 +2111,85 @@ class RecipeIngredientInline(admin.StackedInline):
     readonly_fields = ['quantity_as_float','as_mks', 'as_imperial']
     # fields = ['name', 'quantity', 'unit', 'directions', 'quantity_as_float'] # which features you want there to be shown
 ```
+- nice thing about this is the fact that i think, you don't have to do migrations
+## Session 57:
+- CRUD views for recipe model
+- CURD -> Create Retrieve Update and Delete
+- let's head to the recipes/views.py:
+```python
+from django.shortcuts import render, get_object_or_404, redirect
+from recipes.models import Recipe
+from django.contrib.auth.decorators import login_required
+from recipes.forms import RecipeForm
+# CURD -> Create Retrieve Update and Delete
+
+@login_required
+def recipe_list_view(request):
+    qs = Recipe.objects.filter(user=request.user)
+    context = {
+        'object_list':qs
+    }
+    return render(request, 'recipes/list.html', context=context)
+
+@login_required
+def recipe_detial_view(request, id=None):
+    obj = get_object_or_404(Recipe, id=id, user=request.user)
+    context = {
+        'obj':obj
+    }
+    return render(request, 'recipes/detail.html', context=context)
+
+
+
+
+@login_required
+def recipe_create_view(request):
+    form = RecipeForm(request.POST or None)
+    context = {
+        'form':form
+    }
+    if form.is_valid():
+        obj = form.save(commit=False)
+        obj.user = request.user
+        obj.save()
+        return redirect(obj.get_absolute_url())
+
+    return render(request, 'recipes/create-update.html', context=context)
+
+@login_required
+def recipe_update_view(request, id=None):
+    obj = get_object_or_404(Recipe, id=id, user=request.user)
+    form = RecipeForm(request.POST or None, instance=obj)
+    context = {
+        'form':form,
+        'obj':obj
+    }
+    if form.is_valid():
+        form.save()
+        context['message'] = 'Data Saved'
+    return render(request, 'recipes/create-update.html', context=context)
+```
+- now to make RecipeForm, create a file in the path recipes/forms.py:
+```python
+from django import forms
+from recipes.models import Recipe
+
+
+class RecipeForm(forms.ModelForm):
+    class Meta:
+        model = Recipe
+        fields = ['name', 'description', 'directions']
+```
+- and in order for the .get_absolute_url() to work, let's do this in recipes/models.py:
+```python
+class Recipe(models.Model):
+    ...
+    def get_absolute_url(self):
+    return '/pantry/recipes/'
+
+class RecipeIngredients(models.Model):
+    ...
+    def get_absolute_url(self):
+    return self.recipe.get_absolute_url()
+```
+- in the next part we are going to implement the .html files too!
