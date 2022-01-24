@@ -2072,3 +2072,42 @@ from recipes.models import *
 RecipeIngredients.objects.create(recipe=r, name='Hello There', quantity='21', unit='abc')
 ```
 - this will create a recipe ingredient even tho the unit is invalid. why??!
+## Session 56:
+- use python Pint package to convert units
+- let's head to the recipes/models.py:
+```python
+import pint
+
+class RecipeIngredient(models.Model):
+    ...
+
+    def convert_to_system(self, system='mks'):   
+        if self.quantity_as_float is None:
+            return '' 
+        ureg = pint.UnitRegistry(system=system)
+        measurement = self.quantity_as_float * ureg[self.unit]
+        print(measurement)
+        return measurement # .to_base_units()
+
+
+    def as_mks(self):
+        # meter, kilogram, second
+        measurement = self.convert_to_system(system='mks')
+        print(measurement)
+        return measurement.to_base_units()
+
+    def as_imperial(self):
+        # miles, pounds, seconds
+        measurement = self.convert_to_system(system='imperial')
+        print(measurement)
+        return measurement.to_base_units()
+```
+- and now head to the recipes/admin.py:
+```python
+class RecipeIngredientInline(admin.StackedInline):
+    model = RecipeIngredients
+    extra = 0 # how many RecipeIngredients you want to have right of the bat in any recipe
+    # you can use those instance methods as elements in this list too!
+    readonly_fields = ['quantity_as_float','as_mks', 'as_imperial']
+    # fields = ['name', 'quantity', 'unit', 'directions', 'quantity_as_float'] # which features you want there to be shown
+```
