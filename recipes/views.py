@@ -13,7 +13,7 @@ def recipe_list_view(request):
     return render(request, 'recipes/list.html', context=context)
 
 @login_required
-def recipe_detial_view(request, id=None):
+def recipe_detail_view(request, id=None):
     obj = get_object_or_404(Recipe, id=id, user=request.user)
     context = {
         'obj':obj

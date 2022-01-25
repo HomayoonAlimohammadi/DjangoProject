@@ -14,7 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 
 from .views import HomeView
 from articles.views import (
@@ -30,10 +30,9 @@ from accounts.views import (
 
 urlpatterns = [
     path('', HomeView), #index / home/ root
+    path('pantry/recipes/', include('recipes.urls')), # include('recipes.urls') is the path to app and it's urls.py
     # The orders are so important, but why and how?
-    path('articles/', article_search_view),
-    path('articles/create/', article_create_view, name='article-create'),
-    path('articles/<slug:slug>/', article_detail_view, name='article-detail'),
+    path('articles/', include('articles.urls')),
     path('admin/', admin.site.urls),
     path('login/', login_view),
     path('logout/', logout_view),

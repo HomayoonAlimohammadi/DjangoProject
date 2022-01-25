@@ -2193,3 +2193,78 @@ class RecipeIngredients(models.Model):
     return self.recipe.get_absolute_url()
 ```
 - in the next part we are going to implement the .html files too!
+## Session 58:
+- <b>Warning! this session is a hard one! pay extra attention!</b>
+- let's implement the urls for these apps
+- this time we want to add them <b>inside the recipe folder</b> (what is the difference?), so create it:
+```python
+from django.urls import path
+from recipes.views import (
+    recipe_list_view,
+    recipe_detail_view,
+    recipe_create_view,
+    recipe_update_view
+)
+
+# order matters, they are gonna match the order they come in. order should make sense.
+app_name = 'recipes' # we can recipes:list as a reverse call or recipes:create
+urlpatterns = [
+    path('', recipe_list_view, name='list'),
+    path('create/', recipe_create_view, name='create'),
+    path('<int:id>/edit/', recipe_update_view, name='update'),
+    path('<int:id>/', recipe_detail_view, name='detail')
+]
+```
+- let's head to recipes/models.py:
+```python
+def get_absolute_url(self):
+    return rever('recipes:detail', kwargs={'id':self.id})
+```
+- now head to main configuration urls.py:
+```python
+from django.contrib import admin
+from django.urls import path, include
+from .views import HomeView
+from accounts.views import (
+    login_view,
+    logout_view,
+    register_view
+)
+
+urlpatterns = [
+    path('', HomeView), #index / home/ root
+    path('pantry/recipes/', include('recipes.urls')), # include('recipes.urls') is the path to app and it's urls.py
+    # The orders are so important, but why and how?
+    path('articles/', include('articles.urls')),
+    path('admin/', admin.site.urls),
+    path('login/', login_view),
+    path('logout/', logout_view),
+    path('register/', register_view)
+]
+```
+- now create the articles/urls.py just to make it same as recipes model:
+```python
+from django.urls import path
+from articles.views import (
+    article_search_view,
+    article_create_view,
+    article_detail_view
+)
+
+app_name = 'articles' # just like recipes, articles:search
+urlpatterns = [
+    path('', article_search_view, name='search'),
+    path('create/', article_create_view, name='create'),
+    path('<slug:slug>/', article_detail_view, name='detail'),
+]
+```
+- to fix the template NoReverseMatch error, head to HomeView.html:
+```html
+<h3><a href='{% url "articles:create" %}'>Create Article</a></h3>
+```
+- and in the articles/models.py:
+```python
+    def get_absolute_url(self):
+        # return f'/articles/{self.slug}/'
+        return reverse('articles:detail', kwargs={'slug':self.slug})
+```
