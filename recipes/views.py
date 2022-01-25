@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from recipes.models import Recipe
 from django.contrib.auth.decorators import login_required
-from recipes.forms import RecipeForm
+from recipes.forms import RecipeForm, RecipeIngredientsForm
 # CURD -> Create Retrieve Update and Delete
 # FVB -> CBV | function based view VS class based view
 # CVB prevents redundant code
@@ -45,11 +45,19 @@ def recipe_update_view(request, id=None):
     # instead of 'instance=obj' you could use initial={'name':'something ,...} but it
     # would overwrite everything including self.user which is not good.
     # don't mistake initial with instance
+
+    form_2 = RecipeIngredientsForm(request.POST or None)
+
     context = {
         'form':form,
+        'form_2':form_2,
         'obj':obj
     }
-    if form.is_valid():
-        form.save()
+    if all([form.is_valid(), form_2.is_valid()]):
+        parent = form.save(commit=False)
+        parent.save()
+        child = form_2.save(commit=False)
+        child.recipe = parent
+        child.save()
         context['message'] = 'Data Saved'
     return render(request, 'recipes/create-update.html', context=context)

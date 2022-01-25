@@ -2381,3 +2381,69 @@ def recipe_update_view(request, id=None):
     return render(request, 'recipes/create-update.html', context=context)
 ```
 - in the next parts we tend to add recipe ingredients too
+## Session 60:
+- 2 forms 1 view
+- head to the recipes/forms.py:
+```python
+from django import forms
+from recipes.models import Recipe, RecipeIngredients
+
+class RecipeForm(forms.ModelForm):
+    class Meta:
+        model = Recipe
+        fields = ['name', 'description', 'directions']
+
+    
+class RecipeIngredientsForm(forms.ModelForm):
+    class Meta:
+        model = RecipeIngredients
+        fields = ['name', 'quantity', 'unit']
+```
+- and in the recipes/views.py:
+```python
+from recipes.forms import RecipeForm, RecipeIngredientsForm
+
+@login_required
+def recipe_update_view(request, id=None):
+    obj = get_object_or_404(Recipe, id=id, user=request.user)
+    form = RecipeForm(request.POST or None, instance=obj)
+    # instead of 'instance=obj' you could use initial={'name':'something ,...} but it
+    # would overwrite everything including self.user which is not good.
+    # don't mistake initial with instance
+
+    form_2 = RecipeIngredientsForm(request.POST or None)
+
+    context = {
+        'form':form,
+        'form_2':form_2,
+        'obj':obj
+    }
+    if all([form.is_valid(), form_2.is_valid()]):
+        parent = form.save(commit=False)
+        parent.save()
+        child = form_2.save(commit=False)
+        child.recipe = parent
+        child.save()
+        context['message'] = 'Data Saved'
+    return render(request, 'recipes/create-update.html', context=context)
+```
+- and update the create-update.html file as below:
+```html
+{% block content %}
+{% if message %}
+<h2>{{message}}</h2>
+{% endif %} 
+<form method='POST'>
+    {% csrf_token %}
+    {{ form.as_p }}
+    {% if form_2 %}
+    <h3>Ingredients</h3>
+    {{ form_2.as_p}}
+    {% endif %}
+    <button type='Submit'>Save</button>
+</form>
+<h3><a href='../../'>Back to Home</a></h3>
+{% endblock %}
+```
+- but this is not working, why?
+- the child parent relation is not right it seems like. because it overwrites the child name for the parents. it has something to do with instance in form defining part. we will fix it in the next part.
