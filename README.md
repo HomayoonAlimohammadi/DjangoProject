@@ -2268,3 +2268,116 @@ urlpatterns = [
         # return f'/articles/{self.slug}/'
         return reverse('articles:detail', kwargs={'slug':self.slug})
 ```
+## Session 59:
+- CRUD templates for the Reicpes app
+- a new approach to adding templates
+- you can do both this approach and our old approach of adding recipes folder in the Template folder
+- create a new forlder in the recipes folder called templates
+- inside of it create a folder called recipes, and then there, list.html:
+```html
+<b>Blank on purpose, look for main templates dir.</b>
+```
+- what you can do, is to overwrite this .html file in the main directory folder
+- if you make templates in the new way, apps are more self contained and easier to use later, yet more complex. 
+- so to keep everything simple, all we do is to just overwrite it by creating:
+- Templates/Recipes/list.html:
+```html
+<b>New overwrited html!</b>
+```
+- so in the main configuration, create other templates too. (create-update, detail)
+- now set them up like this, list.html:
+```html
+{% extends 'Base.html' %}
+
+{% block title %}
+<h1>My Recipes</h1>
+<h3><a href='{% url "recipes:create" %}'>Add Recipe</a></h3>
+{% endblock title %}
+
+{% block content %} 
+<h3>{{content}}</h3>
+<p>{% for x in object_list %}
+<li><a href='{{ x.get_absolute_url }}'>{{ x.name }}</a></li>
+{% endfor %}
+</p>
+
+
+
+{% endblock content %}
+```
+- create-update.html:
+```html
+{% extends 'Base.html' %}
+
+{% block title %}
+<h1>{{obj.name}}</h1>
+{% endblock %}
+
+{% block content %}
+{% if message %}
+<h2>{{message}}</h2>
+{% endif %} 
+<form method='POST'>
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type='Submit'>Save</button>
+</form>
+<h3><a href='../../'>Back to Home</a></h3>
+{% endblock %}
+```
+- detail.html:
+```html
+{% extends 'Base.html' %}
+
+{% block title %}
+<h1>{{obj.name}}</h1>
+<h3><a href= '{{ obj.get_edit_url }}'>Edit</a></h3>
+
+{% endblock %}
+
+{% block content %}
+<p>{{obj.description}}</p>
+<p>{{ obj.directoins }}</p>
+{% for ingredient in obj.get_ingredients_children %}
+<p>{{ingredient.name}}</p>
+<p>{{ingredient.as_imperial}}</p>
+<p>{{ingredient.as_mks}}</p>
+{% endfor %}
+<h3><a href='../'>Recipe List</a></h3>
+<h3><a href='../../../../'>Back to Home</a></h3>
+{% endblock %}
+```
+- and in the HomeView.html add a link to recipes list:
+```html
+<h2><a href='pantry/recipes/'>Go to Recipe List</a></h2>
+```
+- in the recipes/models.py add this:
+```python
+
+    def get_edit_url(self):
+        return reverse('recipes:update', kwargs={'id':self.id})
+
+    def get_ingredients_children(self):
+        return self.recipeingredients_set.all()
+```
+- <b>FVB -> CBV | function based view VS class based view
+- CVB prevents redundant code</b>
+- in the recipes/views.py pay attention to:
+```python
+@login_required
+def recipe_update_view(request, id=None):
+    obj = get_object_or_404(Recipe, id=id, user=request.user)
+    form = RecipeForm(request.POST or None, instance=obj)
+    # instead of 'instance=obj' you could use initial={'name':'something ,...} but it
+    # would overwrite everything including self.user which is not good.
+    # don't mistake initial with instance
+    context = {
+        'form':form,
+        'obj':obj
+    }
+    if form.is_valid():
+        form.save()
+        context['message'] = 'Data Saved'
+    return render(request, 'recipes/create-update.html', context=context)
+```
+- in the next parts we tend to add recipe ingredients too

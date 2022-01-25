@@ -3,7 +3,8 @@ from recipes.models import Recipe
 from django.contrib.auth.decorators import login_required
 from recipes.forms import RecipeForm
 # CURD -> Create Retrieve Update and Delete
-
+# FVB -> CBV | function based view VS class based view
+# CVB prevents redundant code
 @login_required
 def recipe_list_view(request):
     qs = Recipe.objects.filter(user=request.user)
@@ -41,6 +42,9 @@ def recipe_create_view(request):
 def recipe_update_view(request, id=None):
     obj = get_object_or_404(Recipe, id=id, user=request.user)
     form = RecipeForm(request.POST or None, instance=obj)
+    # instead of 'instance=obj' you could use initial={'name':'something ,...} but it
+    # would overwrite everything including self.user which is not good.
+    # don't mistake initial with instance
     context = {
         'form':form,
         'obj':obj

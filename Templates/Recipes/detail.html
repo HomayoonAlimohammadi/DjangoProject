@@ -1,0 +1,19 @@
+{% extends 'Base.html' %}
+
+{% block title %}
+<h1>{{obj.name}}</h1>
+<h3><a href= '{{ obj.get_edit_url }}'>Edit</a></h3>
+
+{% endblock %}
+
+{% block content %}
+<p>{{obj.description}}</p>
+<p>{{ obj.directoins }}</p>
+{% for ingredient in obj.get_ingredients_children %}
+<p>{{ingredient.name}}</p>
+<p>{{ingredient.as_imperial}}</p>
+<p>{{ingredient.as_mks}}</p>
+{% endfor %}
+<h3><a href='../'>Recipe List</a></h3>
+<h3><a href='../../../../'>Back to Home</a></h3>
+{% endblock %}

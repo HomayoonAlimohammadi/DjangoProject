@@ -17,6 +17,12 @@ class Recipe(models.Model):
     def get_absolute_url(self):
         return reverse('recipes:detail', kwargs={'id':self.id})
 
+    def get_edit_url(self):
+        return reverse('recipes:update', kwargs={'id':self.id})
+
+    def get_ingredients_children(self):
+        return self.recipeingredients_set.all()
+
 class RecipeIngredients(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     name = models.CharField(max_length=220)
@@ -38,20 +44,17 @@ class RecipeIngredients(models.Model):
             return ''
         ureg = pint.UnitRegistry(system=system)
         measurement = self.quantity_as_float * ureg[self.unit]
-        print(measurement)
         return measurement # .to_base_units()
 
 
     def as_mks(self):
         # meter, kilogram, second
         measurement = self.convert_to_system(system='mks')
-        print(measurement)
         return measurement.to_base_units()
 
     def as_imperial(self):
         # miles, pounds, seconds
         measurement = self.convert_to_system(system='imperial')
-        print(measurement)
         return measurement.to_base_units()
 
     # it's good to overwrite save method when it's automatically generating a field from another field
