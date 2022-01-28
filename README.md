@@ -2579,3 +2579,85 @@ class RecipeForm(forms.ModelForm):
         self.fields['description'].widget.attrs.update({'rows':'2'})
 ```
 - django crispy forms is a third party package to make these forms look prettier
+## Session 63:
+- rendering form fields individually and more
+- so let's head to the templates/recipes/create-update.html:
+```html
+<form method='POST'>
+    {% csrf_token %}
+    {% for field in form %} 
+    <div class='{% if field.field.required %}{{ form.required_css_class }}{% endif %}'>
+        {{ field.label_tag }} {{ field }} 
+    </div>
+    {% endfor %}
+    {% if formset %}
+    <h3>Ingredients</h3>
+    {{ formset.as_p}}
+    {% endif %}
+    <button type='Submit'>Save</button>
+</form>
+```
+- just for fun, another thing you can do is to:
+```html
+<form method='POST'>
+    {% csrf_token %}
+    {% for field in form %} 
+    <div class='{% if field.field.required %}{{ form.required_css_class }}{% endif %}'>
+        {{ field.label_tag }} {{ field }}
+    {% if field.help_text %} 
+    {{ field.help_text|safe }}
+    <!-- this is called template filter or template tag, you can allow for links with this -->
+    {% endif %} 
+    </div>
+    {% endfor %}
+    {% if formset %}
+    <h3>Ingredients</h3>
+    {{ formset.as_p}}
+    {% endif %}
+    <button type='Submit'>Save</button>
+</form>
+```
+- let's do this with formset:
+```html
+{% extends 'Base.html' %}
+
+{% block title %}
+<h1>{{obj.name}}</h1>
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .ingredient-form {
+        border-bottom: 1px solid black;
+    }
+</style>
+{% if message %}
+<h2>{{message}}</h2>
+{% endif %} 
+<form method='POST'>
+    {% csrf_token %}
+    {% for field in form %} 
+    <div class='{% if field.field.required %}{{ form.required_css_class }}{% endif %}'>
+        {{ field.label_tag }} {{ field }}
+    {% if field.help_text %} 
+    {{ field.help_text|safe }}
+    {% endif %} 
+    </div>
+    {% endfor %}
+    {% if formset %}
+    <h3>Ingredients</h3>
+    {{ formset.management_form }}
+    <!-- this is necessary in order not to hide the forms after edditing -->
+    {% for form in formset %} 
+    <div class='ingredient-form'>
+        {{ form.as_p}}
+    </div>
+    {% endfor %}
+    {% endif %}
+    <button type='Submit'>Save</button>
+</form>
+<h3><a href='../'>Back</a></h3>
+{% endblock %}
+```
+- we prefer <b>Django crispy forms</b>

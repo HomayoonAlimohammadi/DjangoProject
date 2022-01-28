@@ -7,7 +7,7 @@ class RecipeForm(forms.ModelForm):
     
     # choose the 'name' as variable cause u are handling input area called 'name'
     ''
-    # name = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder':'Recipe Name'}))
+    name = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder':'Recipe Name'}), help_text='This is your help! <a href="../../../../">Contact us</a>')
     ''
     # you will forget the line above, make sure to check django documentations 
     # choose 'description' for the same reason. 
