@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from recipes.models import Recipe
+from recipes.models import Recipe, RecipeIngredients
 from django.contrib.auth.decorators import login_required
+from django.forms.models import modelformset_factory # ModelForm for querysets
 from recipes.forms import RecipeForm, RecipeIngredientsForm
 # CURD -> Create Retrieve Update and Delete
 # FVB -> CBV | function based view VS class based view
@@ -42,22 +43,23 @@ def recipe_create_view(request):
 def recipe_update_view(request, id=None):
     obj = get_object_or_404(Recipe, id=id, user=request.user)
     form = RecipeForm(request.POST or None, instance=obj)
-    # instead of 'instance=obj' you could use initial={'name':'something ,...} but it
-    # would overwrite everything including self.user which is not good.
-    # don't mistake initial with instance
-
-    form_2 = RecipeIngredientsForm(request.POST or None)
-
+    # Formset = modelformset_factory(Model, form=ModelForm, extra=0)
+    RecipeIngredientsFormset = modelformset_factory(RecipeIngredients, form=RecipeIngredientsForm, extra=0)
+    qs = obj.recipeingredients_set.all()
+    formset = RecipeIngredientsFormset(request.POST or None, queryset=qs)
     context = {
         'form':form,
-        'form_2':form_2,
+        'formset':formset,
         'obj':obj
     }
-    if all([form.is_valid(), form_2.is_valid()]):
+    if all([form.is_valid(), formset.is_valid()]):
         parent = form.save(commit=False)
         parent.save()
-        child = form_2.save(commit=False)
-        child.recipe = parent
-        child.save()
+        # formset.save() when you don't 
+        for form in formset:
+            child = form.save(commit=False)
+            if child.recipe is None:
+                child.recipe = parent
+            child.save()
         context['message'] = 'Data Saved'
     return render(request, 'recipes/create-update.html', context=context)

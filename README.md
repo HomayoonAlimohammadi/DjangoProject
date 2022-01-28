@@ -2447,3 +2447,65 @@ def recipe_update_view(request, id=None):
 ```
 - but this is not working, why?
 - the child parent relation is not right it seems like. because it overwrites the child name for the parents. it has something to do with instance in form defining part. we will fix it in the next part.
+## Session 61:
+- essentially we want to be able to properly edit all the childs of the parent
+- or in other words edit all ingredients for a given recipe
+- you would say that we can do this in the recipes/views.py:
+```python
+@login_required
+def recipe_update_view(request, id=None):
+    obj = get_object_or_404(Recipe, id=id, user=request.user)
+    form = RecipeForm(request.POST or None, instance=obj)
+    form_2 = RecipeIngredientsForm(request.POST or None)
+    # obj = recipeingredient_set.all()
+    ingredient_forms = []
+    for ingredient_obj in obj.recipeingreidient_set.all():
+        RecipieIngredientForm(request.POST or None, instance=ingredient_obj)
+    context = {
+        'form':form,
+        'ingredient_forms':ingredient_forms,
+        'obj':obj
+    }
+    my_forms = all([form.is_valid() for form in ingredient_forms])
+    if form.is_valid and my_forms:
+        parent = form.save(commit=False)
+        parent.save()
+        for form_2 in ingredient_forms:
+            child = form_2.save(commit=False)
+            child.recipe = parent
+            child.save()
+        context['message'] = 'Data Saved'
+    return render(request, 'recipes/create-update.html', context=context)
+```
+- is this the best way to do this? NO!
+- one main problem of this, is we can't handle dynamicly adding new items to the recipeingredient list (+ Add Ingredient)
+- the much better practice is to use: modelformset_factory
+- so head to the recipes/views.py:
+```python
+@login_required
+def recipe_update_view(request, id=None):
+    obj = get_object_or_404(Recipe, id=id, user=request.user)
+    form = RecipeForm(request.POST or None, instance=obj)
+    # Formset = modelformset_factory(Model, form=ModelForm, extra=0)
+    RecipeIngredientsFormset = modelformset_factory(RecipeIngredients, form=RecipeIngredientsForm, extra=0)
+    qs = obj.recipeingredients_set.all()
+    formset = RecipeIngredientsFormset(request.POST or None, queryset=qs)
+    context = {
+        'form':form,
+        'formset':formset,
+        'obj':obj
+    }
+    if all([form.is_valid(), formset.is_valid()]):
+        parent = form.save(commit=False)
+        parent.save()
+        # formset.save() when you don't 
+        for form in formset:
+            child = form.save(commit=False)
+            if child.recipe is None:
+                child.recipe = parent
+            child.save()
+        context['message'] = 'Data Saved'
+    return render(request, 'recipes/create-update.html', context=context)
+```
+- and minor edits in create-update.html and detail.html
+- in the next part we learn how to add additional forms (ingredients maybe?)
