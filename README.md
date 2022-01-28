@@ -2509,3 +2509,73 @@ def recipe_update_view(request, id=None):
 ```
 - and minor edits in create-update.html and detail.html
 - in the next part we learn how to add additional forms (ingredients maybe?)
+## Session 62:
+- customizing django formfields, adding some widgets, placeholders and...
+- it's a referrence related part. because there is soo sooo much to django forms.
+- head to the recipes/forms.py:
+```python
+from django import forms
+from recipes.models import Recipe, RecipeIngredients
+
+class RecipeForm(forms.ModelForm):
+    required_css_class = 'required-field' # css classes have '-' between then not '_'
+    error_css_class = 'error-field'
+    
+    # choose the 'name' as variable cause u are handling input area called 'name'
+    ''
+    name = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder':'Recipe Name'}))
+    ''
+    # you will forget the line above, make sure to check django documentations 
+    # choose 'description' for the same reason. 
+    # choose the name you want
+    ''
+    description = forms.CharField(widget=forms.Textarea({'rows':'3'}))
+    ''
+    # interestingly, if you make a variable with a name outside your form elements
+    # a new form will be created with the properties you gave it
+
+    
+    class Meta:
+        model = Recipe
+        fields = ['name', 'description', 'directions']
+
+    
+class RecipeIngredientsForm(forms.ModelForm):
+    class Meta:
+        model = RecipeIngredients
+        fields = ['name', 'quantity', 'unit']
+```
+- and let's see yet another method for changing the property of your form:
+```python
+class RecipeForm(forms.ModelForm):
+    required_css_class = 'required-field' # css classes have '-' between then not '_'
+    error_css_class = 'error-field'
+    
+    # choose the 'name' as variable cause u are handling input area called 'name'
+    ''
+    # name = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder':'Recipe Name'}))
+    ''
+    # you will forget the line above, make sure to check django documentations 
+    # choose 'description' for the same reason. 
+    # choose the name you want
+    ''
+    # description = forms.CharField(widget=forms.Textarea({'rows':'3'}))
+    ''
+    # interestingly, if you make a variable with a name outside your form elements
+    # a new form will be created with the properties you gave it
+
+    # yet another method to change those things:
+    # we can use both, but the lines below will overwrite others
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields:
+            new_data = {
+            'placeholder':f'Recipe {str(field)}',
+            'class':'form-control'
+        }
+            self.fields[str(field)].widget.attrs.update(new_data) # you can pass **new_data too, in order to unpack it
+        self.fields['name'].label= 'Naaaaaame!!!!'
+        self.fields['name'].widget.attrs.update({'class':'form-control-2'})
+        self.fields['description'].widget.attrs.update({'rows':'2'})
+```
+- django crispy forms is a third party package to make these forms look prettier
