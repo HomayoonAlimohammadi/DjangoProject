@@ -3,7 +3,8 @@ from recipes.models import Recipe, RecipeIngredients
 from django.contrib.auth.decorators import login_required
 from django.forms.models import modelformset_factory # ModelForm for querysets
 from recipes.forms import RecipeForm, RecipeIngredientsForm
-# CURD -> Create Retrieve Update and Delete
+from django.http import HttpResponse 
+# CRUD -> Create Retrieve Update and Delete
 # FVB -> CBV | function based view VS class based view
 # CVB prevents redundant code
 @login_required
@@ -22,7 +23,18 @@ def recipe_detail_view(request, id=None):
     }
     return render(request, 'recipes/detail.html', context=context)
 
-
+@login_required
+def recipe_detail_hx_view(request, id=None):
+    try:
+        obj = Recipe.objects.get(id=id, user=request.user)
+    except:
+        obj = None
+    if obj is None:
+        return HttpResponse('Not found.')    
+    context = {
+        'obj':obj
+    }
+    return render(request, 'recipes/partials/detail.html', context=context)
 
 
 @login_required

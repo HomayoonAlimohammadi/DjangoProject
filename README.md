@@ -2859,4 +2859,106 @@ MIDDLEWARE = [
 <form action='.' method='POST' hx-post='.' hx-swap='outerHTML'>
 ```
 - now your page will be dynamicly change each time you hit save and won't refresh all over again.
+## Session 66:
+- htmx javascript django fixtures
+- let's make a tepmlates/recipes/partials/detail.html:
+```html
+<p>{{obj.description}}</p>
+<p>{{ obj.directoins }}</p>
+{% for ingredient in obj.get_ingredients_children %}
+<br>
+<h3>{{ingredient.name}}</h3>
+<p>{{ingredient.as_imperial}}</p>
+<p>{{ingredient.as_mks}}</p>
+{% endfor %}
+<h3><a href='../'>Recipe List</a></h3>
+<h3><a href='../../../../'>Back to Home</a></h3>
+```
+- and make the recipes/detail.html:
+```html
+{% extends 'Base.html' %}
 
+{% block title %}
+<h1>{{obj.name}}</h1>
+<h3><a href= '{{ obj.get_edit_url }}'>Edit</a></h3>
+
+{% endblock %}
+
+{% block content %}
+<div hx-get='{{ obj.get_hx_url }}' hx-trigger='revealed'>
+    <!--This is a defulat class: 'htmx indicator'-->
+    <div class='htmx-indicator'>Loading...</div>
+</div>
+{% endblock %}
+```
+- now head to the recipes/views.py:
+```python
+from django.http import HttpResponse 
+
+
+@login_required
+def recipe_detail_view(request, id=None):
+    obj = get_object_or_404(Recipe, id=id, user=request.user)
+    context = {
+        'obj':obj
+    }
+    return render(request, 'recipes/detail.html', context=context)
+
+@login_required
+def recipe_detail_hx_view(request, id=None):
+    try:
+        obj = Recipe.objects.get(id=id, user=request.user)
+    except:
+        obj = None
+    if obj is None:
+        return HttpResponse('Not found.')    
+    context = {
+        'obj':obj
+    }
+    return render(request, 'recipes/partials/detail.html', context=context)
+```
+- and in the recipes/urls.py:
+```python
+from django.urls import path
+from recipes.views import (
+    recipe_list_view,
+    recipe_detail_view,
+    recipe_create_view,
+    recipe_update_view,
+    recipe_detail_hx_view
+)
+
+# order matters, they are gonna match the order they come in. order should make sense.
+app_name = 'recipes' # recipes:list as a reverse call or recipes:create
+urlpatterns = [
+    path('', recipe_list_view, name='list'),
+    path('create/', recipe_create_view, name='create'),
+    path('hx/<int:id>/', recipe_detail_hx_view, name='hx-detail'),
+    path('<int:id>/edit/', recipe_update_view, name='update'),
+    path('<int:id>/', recipe_detail_view, name='detail')
+]
+```
+- and in the recipes/models.py:
+```python
+class Recipe(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    name = models.CharField(max_length=220)
+    description = models.TextField(blank=True, null=True)
+    directions = models.TextField(blank=True, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    active = models.BooleanField(default=True)
+
+    def get_absolute_url(self):
+        return reverse('recipes:detail', kwargs={'id':self.id})
+    
+    
+    def get_hx_url(self):
+        return reverse('recipes:hx-detail', kwargs={'id':self.id})
+
+    def get_edit_url(self):
+        return reverse('recipes:update', kwargs={'id':self.id})
+
+    def get_ingredients_children(self):
+        return self.recipeingredients_set.all()
+```

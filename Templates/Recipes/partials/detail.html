@@ -1,0 +1,10 @@
+<p>{{obj.description}}</p>
+<p>{{ obj.directoins }}</p>
+{% for ingredient in obj.get_ingredients_children %}
+<br>
+<h3>{{ingredient.name}}</h3>
+<p>{{ingredient.as_imperial}}</p>
+<p>{{ingredient.as_mks}}</p>
+{% endfor %}
+<h3><a href='../'>Recipe List</a></h3>
+<h3><a href='../../../../'>Back to Home</a></h3>
