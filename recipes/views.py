@@ -58,8 +58,7 @@ def recipe_update_view(request, id=None):
         # formset.save() when you don't 
         for form in formset:
             child = form.save(commit=False)
-            if child.recipe is None:
-                child.recipe = parent
+            child.recipe = parent
             child.save()
         context['message'] = 'Data Saved'
     return render(request, 'recipes/create-update.html', context=context)

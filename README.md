@@ -2661,3 +2661,155 @@ class RecipeForm(forms.ModelForm):
 {% endblock %}
 ```
 - we prefer <b>Django crispy forms</b>
+## Session 64:
+- how to dynamicly add new elements in the django formset via javascript
+- head to the templates/recipes/create-update.html:
+```html
+{% extends 'Base.html' %}
+
+{% block title %}
+<h1>{{obj.name}}</h1>
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .ingredient-form {
+        border-bottom: 1px solid black;
+    }
+    .hidden {
+        display: none
+    }
+</style>
+{% if message %}
+<h2>{{message}}</h2>
+{% endif %} 
+<form method='POST'>
+    {% csrf_token %}
+    {% for field in form %} 
+    <div class='{% if field.field.required %}{{ form.required_css_class }}{% endif %}'>
+        {{ field.label_tag }} {{ field }}
+    {% if field.help_text %} 
+    {{ field.help_text|safe }}
+    {% endif %} 
+    </div>
+    {% endfor %}
+    {% if formset %}
+    <h3>Ingredients</h3>
+    {{ formset.management_form }}
+    <div id='ingredient-form-list'>
+        {% for form in formset %} 
+        <div class='ingredient-form'>
+            {{ form.as_p}}
+        </div>
+        {% endfor %}
+    </div>
+    <div id='empty-form' class='hidden'>{{ formset.empty_form.as_p }}</div>
+    <button id='add-more' type='button'>Add More</button>
+    {% endif %}
+    <button style='margin-top:10px;' type='Submit'>Save</button>
+</form>
+<h3><a href='../'>Back</a></h3>
+
+<script>
+    const addMoreBtn = document.getElementById('add-more')
+    addMoreBtn.addEventListener('click', add_new_form)
+
+    function add_new_form(event) {
+        if (event) {
+            event.preventDefault() // we will no longer see a console log
+        }
+        const formCopyTarget = document.getElementById('ingredient-form-list')
+        // now add new empty form element to our html form
+        const emptyFormEl = document.getElementById('empty-form').cloneNode(true)
+        // reset the form class
+        emptyFormEl.setAttribute('class', 'ingredient-form')
+        // in order for it not to duplicate data
+        emptyFormEl.setAttribute('id', '')
+
+        formCopyTarget.append(emptyFormEl)
+    } 
+
+
+</script>
+
+{% endblock %}
+```
+- and yet we see that it's not working, so we have to alter the formset management section:
+```html
+{% extends 'Base.html' %}
+
+{% block title %}
+<h1>{{obj.name}}</h1>
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .ingredient-form {
+        border-bottom: 1px solid black;
+    }
+    .hidden {
+        display: none
+    }
+</style>
+{% if message %}
+<h2>{{message}}</h2>
+{% endif %} 
+<form method='POST'>
+    {% csrf_token %}
+    {% for field in form %} 
+    <div class='{% if field.field.required %}{{ form.required_css_class }}{% endif %}'>
+        {{ field.label_tag }} {{ field }}
+    {% if field.help_text %} 
+    {{ field.help_text|safe }}
+    {% endif %} 
+    </div>
+    {% endfor %}
+    {% if formset %}
+    <h3>Ingredients</h3>
+    {{ formset.management_form }}
+    <div id='ingredient-form-list'>
+        {% for form in formset %} 
+        <div class='ingredient-form'>
+            {{ form.as_p}}
+        </div>
+        {% endfor %}
+    </div>
+    <div id='empty-form' class='hidden'>{{ formset.empty_form.as_p }}</div>
+    <button id='add-more' type='button'>Add More</button>
+    {% endif %}
+    <button style='margin-top:10px;' type='Submit'>Save</button>
+</form>
+<h3><a href='../'>Back</a></h3>
+
+<script>
+    const addMoreBtn = document.getElementById('add-more')
+    const totalNewForms = document.getElementById('id_form-TOTAL_FORMS')
+
+    addMoreBtn.addEventListener('click', add_new_form)
+
+    function add_new_form(event) {
+        if (event) {
+            event.preventDefault() // we will no longer see a console log
+        }
+        const currentIngredientForms = document.getElementsByClassName('ingredient-form')
+        const currentFormCount = currentIngredientForms.length
+        const formCopyTarget = document.getElementById('ingredient-form-list')
+        // now add new empty form element to our html form
+        const copyEmptyFormEl = document.getElementById('empty-form').cloneNode(true)
+        // reset the form class
+        copyEmptyFormEl.setAttribute('class', 'ingredient-form')
+        // in order for it not to duplicate data
+        copyEmptyFormEl.setAttribute('id', `form-${currentFormCount}`)
+        const regex = new RegExp('__prefix__', 'g')
+        copyEmptyFormEl.innerHTML = copyEmptyFormEl.innerHTML.replace(regex, currentFormCount)
+        totalNewForms.setAttribute('value', currentFormCount + 1)
+        formCopyTarget.append(copyEmptyFormEl)
+    } 
+
+
+</script>
+
+{% endblock %}
+```
