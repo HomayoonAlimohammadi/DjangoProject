@@ -17,7 +17,7 @@
 {% if message %}
 <h2>{{message}}</h2>
 {% endif %} 
-<form method='POST'>
+<form action='.' method='POST' hx-post='.' hx-swap='outerHTML'>
     {% csrf_token %}
     {% for field in form %} 
     <div class='{% if field.field.required %}{{ form.required_css_class }}{% endif %}'>

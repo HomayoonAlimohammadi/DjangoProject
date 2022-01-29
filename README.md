@@ -2813,3 +2813,50 @@ class RecipeForm(forms.ModelForm):
 
 {% endblock %}
 ```
+## Session 65:
+- making dynamic forms in django formset via HTMX
+- so let's head to the htmx official website: https://htmx.org/
+- copy and paste this line in templates/Base.html:
+```html
+    <head>
+        <script src="https://unpkg.com/htmx.org@1.6.1"></script>
+        {% block title %}
+        {% endblock title %}
+    </head>
+```
+- now install django-htmx and add it to the requirements.txt:
+```shell
+pip install django-htmx
+pip freeze > requirements.txt
+```
+- now let's head to the settings.py and add this package to our installed apps:
+```python
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'django_htmx', # this was added
+    'articles',
+    'recipes'
+]
+
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_htmx.middleware.HtmxMiddleware', # this was added
+]
+```
+- and in the create-update.html:
+```html
+<form action='.' method='POST' hx-post='.' hx-swap='outerHTML'>
+```
+- now your page will be dynamicly change each time you hit save and won't refresh all over again.
+
