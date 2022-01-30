@@ -1,0 +1,21 @@
+<form action='.' method='POST' hx-post='.' hx-swap='outerHTML'>
+ 
+    <h1>{{obj.name}}</h1>
+
+    {% csrf_token %}
+    {% for field in form %} 
+    <div class='{% if field.field.required %}{{ form.required_css_class }}{% endif %}'>
+        {{ field.label_tag }} {{ field }}
+    {% if field.help_text %} 
+    {{ field.help_text|safe }}
+    {% endif %} 
+    </div>
+    {% endfor %}
+    <div class='htmx-indicator'>Loading...</div>
+    <button class='htmx-inverted-indicator' style='margin-top:10px;' type='Submit'>Save</button>
+    {% if message %}
+    <h2 style='color:red;'>Data Saved!</h2>
+    {% endif %} 
+    <h3><a href='../'>Back</a></h3>
+
+</form>

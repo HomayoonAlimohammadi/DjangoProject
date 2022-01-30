@@ -3103,3 +3103,11 @@ def recipe_update_view(request, id=None):
         context['message'] = True
     return render(request, 'recipes/create-update.html', context=context)
 ```
+- and let's dumpdata in fixtures:
+```shell
+mkdir Fixtures
+python manage.py dumpdata recipes --indent 4 > Fixtures/recipes.json
+```
+- this is simillar  to a format which is sent back to a view
+## Session 68:
+- HTMX approach to editing querysets
