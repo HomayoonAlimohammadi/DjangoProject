@@ -72,5 +72,5 @@ def recipe_update_view(request, id=None):
             child = form.save(commit=False)
             child.recipe = parent
             child.save()
-        context['message'] = 'Data Saved'
+        context['message'] = True
     return render(request, 'recipes/create-update.html', context=context)

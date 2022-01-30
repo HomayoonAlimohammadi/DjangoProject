@@ -2962,3 +2962,144 @@ class Recipe(models.Model):
     def get_ingredients_children(self):
         return self.recipeingredients_set.all()
 ```
+## Session 67:
+- HTMX JavaScript Working Together with Python
+- head to the create-update.html:
+```html
+{% extends 'Base.html' %}
+
+{% block title %}
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .ingredient-form {
+        border-bottom: 1px solid black;
+    }
+    .hidden {
+        display: none
+    }
+</style>
+
+<form action='.' method='POST' hx-post='.' hx-swap='outerHTML'>
+ 
+    <h1>{{obj.name}}</h1>
+
+    {% csrf_token %}
+    {% for field in form %} 
+    <div class='{% if field.field.required %}{{ form.required_css_class }}{% endif %}'>
+        {{ field.label_tag }} {{ field }}
+    {% if field.help_text %} 
+    {{ field.help_text|safe }}
+    {% endif %} 
+    </div>
+    {% endfor %}
+    {% if formset %}
+    <h3>Ingredients</h3>
+    {{ formset.management_form }}
+    <div id='ingredient-form-list'>
+        {% for form in formset %} 
+        <div class='ingredient-form'>
+            {{ form.as_p}}
+        </div>
+        {% endfor %}
+    </div>
+    <div id='empty-form' class='hidden'>{{ formset.empty_form.as_p }}</div>
+    <button id='add-more' type='button'>Add More</button>
+    {% endif %}
+    <div class='htmx-indicator'>Loading...</div>
+    <button class='htmx-inverted-indicator' style='margin-top:10px;' type='Submit'>Save</button>
+    {% if message %}
+    <h2 style='color:red;'>Data Saved!</h2>
+    {% endif %} 
+    <h3><a href='../'>Back</a></h3>
+
+</form>
+
+<script>
+    document.addEventListener('click', (event)=>{
+        if (event.target.id == 'add-more') {
+            add_new_form(event)
+        }
+    })
+
+    function add_new_form(event) {
+        if (event) {
+            event.preventDefault() // we will no longer see a console log
+        }
+        const totalNewForms = document.getElementById('id_form-TOTAL_FORMS')
+        const currentIngredientForms = document.getElementsByClassName('ingredient-form')
+        const currentFormCount = currentIngredientForms.length
+        const formCopyTarget = document.getElementById('ingredient-form-list')
+        // now add new empty form element to our html form
+        const copyEmptyFormEl = document.getElementById('empty-form').cloneNode(true)
+        // reset the form class
+        copyEmptyFormEl.setAttribute('class', 'ingredient-form')
+        // in order for it not to duplicate data
+        copyEmptyFormEl.setAttribute('id', `form-${currentFormCount}`)
+        const regex = new RegExp('__prefix__', 'g')
+        copyEmptyFormEl.innerHTML = copyEmptyFormEl.innerHTML.replace(regex, currentFormCount)
+        totalNewForms.setAttribute('value', currentFormCount + 1)
+        formCopyTarget.append(copyEmptyFormEl)
+    } 
+
+
+</script>
+
+{% endblock %}
+```
+- and some changes in views.py: and Base.html:
+```html
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="https://unpkg.com/htmx.org@1.6.1"></script>
+        <style>
+            .htmx-indicator {
+                display: none;
+            }
+            .htmx-request .htmx-indicator {
+                display: inline;
+            }
+            .htmx-inverted-indicator {
+                display: inline;
+            }
+            .htmx-request .htmx-inverted-indicator {
+                display: none;
+            }
+        </style>
+        {% block title %}
+        {% endblock title %}
+    </head>
+    <body>
+        {% block content %}
+        {% endblock content %}
+    </body>
+</html>
+```
+```python
+@login_required
+def recipe_update_view(request, id=None):
+    obj = get_object_or_404(Recipe, id=id, user=request.user)
+    form = RecipeForm(request.POST or None, instance=obj)
+    # Formset = modelformset_factory(Model, form=ModelForm, extra=0)
+    RecipeIngredientsFormset = modelformset_factory(RecipeIngredients, form=RecipeIngredientsForm, extra=0)
+    qs = obj.recipeingredients_set.all()
+    formset = RecipeIngredientsFormset(request.POST or None, queryset=qs)
+    context = {
+        'form':form,
+        'formset':formset,
+        'obj':obj
+    }
+    if all([form.is_valid(), formset.is_valid()]):
+        parent = form.save(commit=False)
+        parent.save()
+        # formset.save() when you don't 
+        for form in formset:
+            child = form.save(commit=False)
+            child.recipe = parent
+            child.save()
+        context['message'] = True
+    return render(request, 'recipes/create-update.html', context=context)
+```
