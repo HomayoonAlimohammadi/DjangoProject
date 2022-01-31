@@ -3357,14 +3357,61 @@ class RecipeForm(forms.ModelForm):
             new_data = {
             'placeholder':f'Recipe {str(field)}',
             'class':'form-control',
-            'hx-post':'.',
-            'hx-trigger':'keyup changed delay:500ms',
-            'hx-target':'#recipe-container',
-            'hx-swap':'outerHTML'
+            # 'hx-post':'.',
+            # 'hx-trigger':'keyup changed delay:500ms',
+            # 'hx-target':'#recipe-container',
+            # 'hx-swap':'outerHTML'
         }
             self.fields[str(field)].widget.attrs.update(new_data) # you can pass **new_data too, in order to unpack it
         self.fields['name'].label= 'Naaaaaame!!!!'
         self.fields['name'].widget.attrs.update({'class':'form-control-2'})
         self.fields['description'].widget.attrs.update({'rows':'2'})
         self.fields['directions'].widget.attrs.update({'rows':'4'})
+```
+## Session 70:
+- HTMX Reponse Header 
+- let's head to recipes/forms.py:
+```python
+def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields:
+            new_data = {
+            'placeholder':f'Recipe {str(field)}',
+            'class':'form-control',
+            # 'hx-post':'.',
+            # 'hx-trigger':'keyup changed delay:500ms',
+            # 'hx-target':'#recipe-container',
+            # 'hx-swap':'outerHTML'
+        }
+```
+- now let's head to templates/recipes/partials/forms.html:
+```html
+<form action='.' method='POST' hx-post='.' hx-swap='outerHTML' hx-trigger='{% if form.instance.id %} change delay:500ms,{% endif %}submit'>
+```
+- finally let's head to recipes/views.py:
+```python
+@login_required
+def recipe_create_view(request):
+    form = RecipeForm(request.POST or None)
+    context = {
+        'form':form
+    }
+    if form.is_valid():
+        obj = form.save(commit=False)
+        obj.user = request.user
+        obj.save()
+        if request.htmx:
+            headers = {
+                'HX-Redirect': obj.get_absolute_url() 
+            }
+            return HttpResponse('Created', headers=headers)
+
+            # context = {
+            #     'object':obj
+            # }
+            # return render(request, 'recipes/partials/detail.html', context=context)
+
+        return redirect(obj.get_absolute_url())
+
+    return render(request, 'recipes/create-update.html', context=context)
 ```
