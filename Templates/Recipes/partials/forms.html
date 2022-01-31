@@ -1,4 +1,5 @@
-<form action='.' method='POST' hx-post='.' hx-swap='outerHTML'>
+<div id='recipe-container'>
+<form action='.' method='POST' hx-post='.' hx-swap='outerHTML' hx-trigger='change delay:500ms, submit'>
  
     <h1>{{obj.name}}</h1>
 
@@ -19,3 +20,4 @@
     <h3><a href='../'>Back</a></h3>
 
 </form>
+</div>

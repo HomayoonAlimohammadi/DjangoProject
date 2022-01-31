@@ -3309,3 +3309,62 @@ class RecipeIngredients(models.Model):
 </div>
 ```
 - and now you can dynamicly edit, add and save ingredients for a given recipe!
+## Session 69:
+- Auto save with HTMX
+- let's head to templates/recipes/partials/forms.html:
+```html
+<form action='.' method='POST' hx-post='.' hx-swap='outerHTML' hx-trigger='change delay:500ms, submit'>
+```
+- this way you can change the 'hx-trigger' so that with a change and a delay of 500ms + submitting (hitting the 'Save' button) you will be able to save the form and trigger the hx action
+- the hx-trigger default value is 'submit'
+- let's add this <div> to forms.html:
+```html
+<div id='recipe-container'>
+<form action='.' method='POST' hx-post='.' hx-swap='outerHTML' hx-trigger='change delay:500ms, submit'>
+ 
+    <h1>{{obj.name}}</h1>
+
+    {% csrf_token %}
+    {% for field in form %} 
+    <div class='{% if field.field.required %}{{ form.required_css_class }}{% endif %}'>
+        {{ field.label_tag }} {{ field }}
+    {% if field.help_text %} 
+    {{ field.help_text|safe }}
+    {% endif %} 
+    </div>
+    {% endfor %}
+    <div class='htmx-indicator'>Loading...</div>
+    <button class='htmx-inverted-indicator' style='margin-top:10px;' type='Submit'>Save</button>
+    {% if message %}
+    <h2 style='color:red;'>Data Saved!</h2>
+    {% endif %} 
+    <h3><a href='../'>Back</a></h3>
+
+</form>
+</div>
+```
+- and in the recipes/forms.py:
+```python
+class RecipeForm(forms.ModelForm):
+    required_css_class = 'required-field' # css classes have '-' between then not '_'
+    error_css_class = 'error-field'
+   
+    name = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder':'Recipe Name'}), help_text='This is your help! <a href="../../../../">Contact us</a>')
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields:
+            new_data = {
+            'placeholder':f'Recipe {str(field)}',
+            'class':'form-control',
+            'hx-post':'.',
+            'hx-trigger':'keyup changed delay:500ms',
+            'hx-target':'#recipe-container',
+            'hx-swap':'outerHTML'
+        }
+            self.fields[str(field)].widget.attrs.update(new_data) # you can pass **new_data too, in order to unpack it
+        self.fields['name'].label= 'Naaaaaame!!!!'
+        self.fields['name'].widget.attrs.update({'class':'form-control-2'})
+        self.fields['description'].widget.attrs.update({'rows':'2'})
+        self.fields['directions'].widget.attrs.update({'rows':'4'})
+```
