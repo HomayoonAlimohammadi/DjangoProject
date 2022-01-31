@@ -3111,3 +3111,201 @@ python manage.py dumpdata recipes --indent 4 > Fixtures/recipes.json
 - this is simillar  to a format which is sent back to a view
 ## Session 68:
 - HTMX approach to editing querysets
+- ok so this one is a veeery though one!
+- head to recipes/views.py:
+```python
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
+from recipes.models import Recipe, RecipeIngredients
+from django.contrib.auth.decorators import login_required
+from django.forms.models import modelformset_factory # ModelForm for querysets
+from recipes.forms import RecipeForm, RecipeIngredientsForm
+from django.http import HttpResponse 
+from django.http import Http404
+# CRUD -> Create Retrieve Update and Delete
+# FVB -> CBV | function based view VS class based view
+# CVB prevents redundant code
+@login_required
+def recipe_list_view(request):
+    qs = Recipe.objects.filter(user=request.user)
+    context = {
+        'object_list':qs
+    }
+    return render(request, 'recipes/list.html', context=context)
+
+@login_required
+def recipe_detail_view(request, id=None):
+    obj = get_object_or_404(Recipe, id=id, user=request.user)
+    context = {
+        'obj':obj
+    }
+    return render(request, 'recipes/detail.html', context=context)
+
+@login_required
+def recipe_detail_hx_view(request, id=None):
+    if not request.htmx:
+        raise Http404 
+    try:
+        obj = Recipe.objects.get(id=id, user=request.user)
+    except:
+        obj = None
+    if obj is None:
+        return HttpResponse('Not found.')    
+    context = {
+        'obj':obj
+    }
+    return render(request, 'recipes/partials/detail.html', context=context)
+
+
+@login_required
+def recipe_create_view(request):
+    form = RecipeForm(request.POST or None)
+    context = {
+        'form':form
+    }
+    if form.is_valid():
+        obj = form.save(commit=False)
+        obj.user = request.user
+        obj.save()
+        return redirect(obj.get_absolute_url())
+
+    return render(request, 'recipes/create-update.html', context=context)
+
+@login_required
+def recipe_update_view(request, id=None):
+    obj = get_object_or_404(Recipe, id=id, user=request.user)
+    form = RecipeForm(request.POST or None, instance=obj)
+    new_ingredient_url = reverse('recipes:hx-ingredient-create', kwargs={'parent_id': id}) 
+    context = {
+        'form':form,
+        'obj':obj,
+        'new_ingredient_url':new_ingredient_url
+    }
+    if form.is_valid():
+        form.save()
+        context['message'] = True
+    if request.htmx:
+        return render(request, 'recipes/partials/forms.html', context)
+    return render(request, 'recipes/create-update.html', context=context)
+
+
+@login_required
+def recipe_ingredient_update_hx_view(request, parent_id=None, id=None):
+    if not request.htmx:
+        raise Http404 
+    try:
+        parent_obj = Recipe.objects.get(id=parent_id, user=request.user)
+    except:
+        parent_obj = None
+    if parent_obj is None:
+           return HttpResponse('Not found.')
+    
+    instance = None
+    if id is not None:
+        try:
+            instance = RecipeIngredients.objects.get(recipe=parent_obj, id=id)
+        except:
+            instance = None
+    
+    form = RecipeIngredientsForm(request.POST or None, instance=instance)
+    url = instance.get_hx_edit_url() if instance else reverse('recipes:hx-ingredient-create', kwargs={'parent_id':parent_obj.id}) 
+    context = {
+        'url':url,
+        'object': instance,
+        'form': form
+    }
+    if form.is_valid():
+        new_obj = form.save(commit=False)
+        if instance is None:
+            new_obj.recipe = parent_obj
+        new_obj.save()
+        context['object'] = new_obj
+        return render(request, 'recipes/partials/ingredient-inline.html', context=context)
+
+    return render(request, 'recipes/partials/ingredient-form.html', context=context)
+```
+- head to recipes/urls.py:
+```python
+from django.urls import path
+from recipes.views import (
+    recipe_list_view,
+    recipe_detail_view,
+    recipe_create_view,
+    recipe_update_view,
+    recipe_detail_hx_view,
+    recipe_ingredient_update_hx_view
+)
+
+# order matters, they are gonna match the order they come in. order should make sense.
+app_name = 'recipes' # recipes:list as a reverse call or recipes:create
+urlpatterns = [
+    path('', recipe_list_view, name='list'),
+    path('create/', recipe_create_view, name='create'),
+    path('hx/<int:parent_id>/ingredient/<int:id>/', recipe_ingredient_update_hx_view, name='hx-ingredient-detail'),
+    path('hx/<int:parent_id>/ingredient/', recipe_ingredient_update_hx_view, name='hx-ingredient-create'),
+    path('hx/<int:id>/', recipe_detail_hx_view, name='hx-detail'),
+    path('<int:id>/edit/', recipe_update_view, name='update'),
+    path('<int:id>/', recipe_detail_view, name='detail')
+]
+```
+- create templates/recipes/partials/ingredient-inline.html:
+```html
+<div id='ingredient-{{object.id}}'>
+    {{ object.quantity }} - {{ object.unit}} - {{ object.name}}
+    <button hx-trigger='click' hx-get='{{ object.get_hx_edit_url }}' hx-target='#ingredient-{{object.id}}'>Edit</button>
+
+</div>
+```
+- create templates/recipes/partials/ingredient-form.html:
+```html
+<form action='.' method='POST' hx-post='{% if url %}{{url}}{% else%}.{% endif %}' hx-swap='outerHTML'>
+    {% csrf_token %}
+    {{ form.as_p }}
+    <div class='htmx-indicator'>Loading...</div>
+    <button class='htmx-inverted-indicator' style='margin-top:10px;' type='Submit'>Save</button>
+
+</form>
+```
+- head to recipes/models.py:
+```python
+class RecipeIngredients(models.Model):
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    name = models.CharField(max_length=220)
+    description = models.TextField(blank=True, null=True)
+    quantity = models.CharField(max_length=50) # 1 1/4, ... which are not int or float
+    quantity_as_float = models.FloatField(blank=True, null=True)
+    # lbs, oz, gram, ...
+    unit = models.CharField(max_length=50, validators=[validate_unit_of_measure]) 
+    directions = models.TextField(blank=True, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    active = models.BooleanField(default=True)
+
+    def get_absolute_url(self):
+        return self.recipe.get_absolute_url()
+    
+    def get_hx_edit_url(self):
+        kwargs = {
+            'parent_id': self.recipe.id,
+            'id': self.id
+```
+- head to templates/recipes/create-update.html:
+```html
+
+<div style='margin-top:30px;'>
+    {% include 'recipes/partials/forms.html' %}
+
+    <h3>Ingredients</h3>
+    {% for ingredient in obj.get_ingredients_children %} 
+        {% include 'recipes/partials/ingredient-inline.html' with object=ingredient %} 
+    {% endfor %}
+    {% if new_ingredient_url %}
+    <div id='ingredient-create'>
+
+    </div>
+    <button hx-get='{{ new_ingredient_url }}' hx-trigger='click' hx-target='#ingredient-create' hx-swap='beforeend'>Add Ingredient</button>
+
+    {% endif %}
+</div>
+```
+- and now you can dynamicly edit, add and save ingredients for a given recipe!
