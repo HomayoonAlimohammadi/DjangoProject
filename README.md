@@ -3415,3 +3415,226 @@ def recipe_create_view(request):
 
     return render(request, 'recipes/create-update.html', context=context)
 ```
+## Session 71:
+- HTMX Typehead Search in Django
+- implement an app to handle our search feature
+- make htmx to perform search
+- this session is something else!
+```shell
+python manage.py startapp search
+```
+- head to search/views.py:
+```python
+from django.shortcuts import render
+from articles.models import Article
+from recipes.models import Recipe
+
+
+SEARCH_TYPE_MAPPING = {
+    'articles': Article,
+    'article': Article,
+    'recipes': Recipe,
+    'recipe': Recipe,
+
+}
+
+def search_view(request):
+    query = request.GET.get('q')
+    search_type = request.GET.get('type')
+    Klass = Recipe
+    if search_type in SEARCH_TYPE_MAPPING.keys():
+        Klass = SEARCH_TYPE_MAPPING[search_type]
+    qs = Klass.objects.search(query=query)
+    context = {
+        'queryset': qs
+    }
+    template = 'search/results-view.html'
+    if request.htmx:
+        context['queryset'] = qs[:5]
+        template = 'search/partials/results.html'
+    return render(request, template, context)
+```
+- TryDjango/settings.py:
+```python
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'django_htmx',
+    'articles',
+    'recipes',
+    'search',
+]
+```
+- head to TryDjango/urls.py:
+```python
+urlpatterns = [
+    path('', HomeView), #index / home/ root
+    path('pantry/recipes/', include('recipes.urls')), # include('recipes.urls') is the path to app and it's urls.py
+    # The orders are so important, but why and how?
+    path('articles/', include('articles.urls')),
+    path('search/', search_view, name='search'),
+    path('admin/', admin.site.urls),
+    path('login/', login_view),
+    path('logout/', logout_view),
+    path('register/', register_view)
+]
+```
+- create templates/search/search-form.html:
+```html
+<div>
+    <form action='/search/' method='GET'>
+        <select name='type' id='search-type'>
+            <!-- {% if request.GET.type == 'all' %} 
+                <option value='all' selected>All</option>
+            {% else %} 
+                <option value='all'>All</option>
+            {% endif %} -->
+            {% if request.GET.type == 'articles' %} 
+                <option value='articles' selected>Articles</option>
+            {% else %} 
+                <option value='articles'>Articles</option>
+            {% endif %}
+            {% if request.GET.type == 'recipes' %} 
+                <option value='recipes' selected>Recipes</option>
+            {% else %} 
+                <option value='recipes'>Recipes</option>
+            {% endif %}
+            
+        </select>
+        <input type='text' id='search-query' name='q' value='{{request.GET.q}}' hx-get='/search/' hx-trigger='keyup changed delay:200ms' hx-include='#search-type' hx-target='#typeahead-results'/>
+        <input type='submit' />
+    </form>
+    <div id='typeahead-results'>
+
+    </div>
+</div>
+```
+- head to recipes/models.py:
+```python
+from django.db.models import Q
+
+# Create your models here.
+
+
+class RecipeQuerySet(models.QuerySet):
+    def search(self, query=None):
+        if query is None or query =='':
+            return self.none()
+        lookups = (
+            Q(name__icontains=query) | 
+            Q(description__icontains=query) |
+            Q(directions__icontains=query)
+        )
+        return self.filter(lookups)
+
+class RecipeManager(models.Manager):
+    def get_queryset(self):
+        return RecipeQuerySet(self.model, using=self._db)
+
+    def search(self, query=None):
+        return self.get_queryset().search(query=query)
+
+class Recipe(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    name = models.CharField(max_length=220)
+    description = models.TextField(blank=True, null=True)
+    directions = models.TextField(blank=True, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    active = models.BooleanField(default=True)
+
+    objects = RecipeManager()
+
+    @property
+    def title(self):
+        return self.name
+```
+- head to templates/articles/search.html:
+```html
+{% extends 'Base.html' %}
+
+
+{% block title %}
+<h1>Search</h1>
+{% include 'search/search-form.html' %}
+<ol>
+{% for obj in obj_list %} 
+    {% if obj.title %}
+    <li><h4><a href="{{obj.get_absolute_url}}">{{obj.title}}</a></h4></li>
+    {% endif %}
+{% endfor %} 
+</ol>
+{% endblock %}
+<!-- 
+{% block content %}
+{% if obj %}
+<p>{{obj.content}}</p>
+{% endif %}
+<h3><a href='../'>Back to Home</a></h3>
+{% endblock %} -->
+```
+- create templates/search/partials/results.html:
+```html
+Searched for {{ request.GET.q }} under {{ request.GET.type|title }}
+{% for object in queryset %} 
+    <li><a href='{{object.get_absolute_url}}'>{{ object.name }}</a></li>
+    {% empty %}
+    <li>No Results Found!</li>
+{% endfor %}
+
+{% if request.htmx %} 
+<a href='/search/?q={{request.GET.q}}&type={{request.GET.type}}'>View all</a>
+{% endif %}
+```
+- head to articles/models.py:
+```python
+class Article(models.Model):
+    # link a user to an article
+    user = models.ForeignKey(User, blank=True, null=True, on_delete=models.SET_NULL)
+
+    # put CharField() for title to set max_character length
+    # head to the Django Model-field-types
+    title = models.CharField(max_length = 100) 
+    # add a Slug, to use instead of the model id in the url
+    slug = models.SlugField(unique=True,blank=True, null=True)
+    content = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+    # auto_now: whenever the model is saved is going to be saved
+    updated = models.DateTimeField(auto_now=True)
+    # auto_now_add: whenever the model is added is going to be added
+    # now that we added new fields to the Article Model, Django asks what to do with the already existing articles
+    # as you know, their new added fields are empty
+    # add defualt from shell when shows the warning, timezone.now
+    publish = models.DateField(auto_now=False, auto_now_add=False, default = timezone.now) # DateField just has the calender, no time
+    # null=True: in the databse it can be empty
+    # blank=True: in django forms or django admin in can be empty
+    '''why is it showing in the /admin/<article_id> ?'''
+    ''' how to delete a field? or how to reset a mistaken field?'''
+    # just comment the field commmand and makemigrations and migrate > it is deleted!
+    '''for changing a field, simply remove it (by commenting) and re add the altered one'''
+    
+    objects = ArticleManager()
+
+    @property
+    def name(self):
+        return self.title
+```
+- create templates/search/results-view.html:
+```html
+{% extends 'Base.html' %} 
+
+
+{% block title %}
+
+    <h1>Search</h1>
+    {% include 'search/partials/results.html' %}
+
+    <h3><a href='../'>Back to Home</a></h3>
+
+{% endblock %}
+```
+

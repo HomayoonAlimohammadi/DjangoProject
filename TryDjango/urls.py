@@ -17,15 +17,14 @@ from django.contrib import admin
 from django.urls import path, include
 
 from .views import HomeView
-from articles.views import (
-    article_search_view,
-    article_create_view,
-    article_detail_view
-)
+
 from accounts.views import (
     login_view,
     logout_view,
     register_view
+)
+from search.views import (
+    search_view
 )
 
 urlpatterns = [
@@ -33,6 +32,7 @@ urlpatterns = [
     path('pantry/recipes/', include('recipes.urls')), # include('recipes.urls') is the path to app and it's urls.py
     # The orders are so important, but why and how?
     path('articles/', include('articles.urls')),
+    path('search/', search_view, name='search'),
     path('admin/', admin.site.urls),
     path('login/', login_view),
     path('logout/', logout_view),

@@ -1,0 +1,27 @@
+<div>
+    <form action='/search/' method='GET'>
+        <select name='type' id='search-type'>
+            <!-- {% if request.GET.type == 'all' %} 
+                <option value='all' selected>All</option>
+            {% else %} 
+                <option value='all'>All</option>
+            {% endif %} -->
+            {% if request.GET.type == 'articles' %} 
+                <option value='articles' selected>Articles</option>
+            {% else %} 
+                <option value='articles'>Articles</option>
+            {% endif %}
+            {% if request.GET.type == 'recipes' %} 
+                <option value='recipes' selected>Recipes</option>
+            {% else %} 
+                <option value='recipes'>Recipes</option>
+            {% endif %}
+            
+        </select>
+        <input type='text' id='search-query' name='q' value='{{request.GET.q}}' hx-get='/search/' hx-trigger='keyup changed delay:200ms' hx-include='#search-type' hx-target='#typeahead-results'/>
+        <input type='submit' />
+    </form>
+    <div id='typeahead-results'>
+
+    </div>
+</div>
