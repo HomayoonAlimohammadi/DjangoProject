@@ -1,7 +1,7 @@
 # Django Tutorial!
 ## Sessions 1-14:
 ### Create virtual environment:
-```python
+```shell
 # in Windows Powershell
 python -m venv . # Create virtual environment in the directory
 cd env
@@ -3637,4 +3637,6 @@ class Article(models.Model):
 
 {% endblock %}
 ```
+## Session 72:
+- Model Object delete View in Django
 
