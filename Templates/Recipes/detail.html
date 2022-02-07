@@ -2,7 +2,12 @@
 
 {% block title %}
 <h1>{{obj.name}}</h1>
-<h3><a href= '{{ obj.get_edit_url }}'>Edit</a></h3>
+{% if obj.get_edit_url %} 
+<small>
+    <a href='{{obj.get_edit_url}}'>Edit</a>
+    <a href='{{obj.get_delete_url}}'>Delete</a>
+</small>
+{% endif %} 
 
 {% endblock %}
 

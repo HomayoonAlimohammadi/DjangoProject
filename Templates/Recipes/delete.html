@@ -1,0 +1,15 @@
+{% extends 'Base.html' %} 
+
+{% block title %}Delete Recipe{% endblock %}
+
+{% block content %}
+
+{% if obj %} 
+<form method = 'POST' action = '.'>
+    {% csrf_token %}
+    <p>Are you sure you want to delete <b>{{ obj.name }}</b></p>
+    <button type='submit'>Yes, Delete.</button>
+</form>
+{% endif %} 
+    
+{% endblock %}
