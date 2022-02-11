@@ -3699,4 +3699,54 @@ urlpatterns = [
 ]
 ```
 - a nice litte '/' was causing massive problems inside the urls. make sure to mind them.
+- and lastly inside of our templates/recipes/partials/forms.html:
+```html
+    <a href='{{ obj.get_delete_url }}'>Delete</a>
+```
+- now let's add Delete option to RecipeIngredients as well:
+- head to recipes/models.py:
+```python
+class RecipeIngredients:
+    ...
 
+def get_delete_url(self):
+        kwargs = {
+            'parent_id': self.recipe.id,
+            'id': self.id
+        }
+        return reverse('recipes:ingredient-delete', kwargs=kwargs)
+```
+- now head to ingredients-inline:
+```html
+    <a href="{{ object.get_delete_url }}">Remove</a>
+```
+- now head to recipes/views.py:
+```python
+@login_required
+def recipe_ingredient_delete_view(request, parent_id=None, id=None):
+    obj = get_object_or_404(RecipeIngredients, id=id, recipe__id = parent_id, recipe__user=request.user)
+    if request.method == 'POST': 
+        obj.delete()
+        success_url = reverse('recipes:detail', kwargs={'id':parent_id})
+        return redirect(success_url)
+    context = {
+        'obj':obj
+    }
+    return render(request, 'recipes/delete.html', context=context)
+```
+- and lastly in the recipes/urls.py:
+```python
+from recipes.views import recipe_ingredient_delete_view
+
+urlpatterns = [
+    path('', recipe_list_view, name='list'),
+    path('create/', recipe_create_view, name='create'),
+    path('hx/<int:parent_id>/ingredient/<int:id>/', recipe_ingredient_update_hx_view, name='hx-ingredient-detail'),
+    path('hx/<int:parent_id>/ingredient/', recipe_ingredient_update_hx_view, name='hx-ingredient-create'),
+    path('hx/<int:id>/', recipe_detail_hx_view, name='hx-detail'),
+    path('<int:parent_id>/ingredient/<int:id>/delete/', recipe_ingredient_delete_view, name='ingredient-delete'),
+    path('<int:id>/delete/', recipe_delete_view, name='delete'),
+    path('<int:id>/edit/', recipe_update_view, name='update'),
+    path('<int:id>/', recipe_detail_view, name='detail')
+]
+```

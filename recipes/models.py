@@ -38,7 +38,7 @@ class Recipe(models.Model):
     active = models.BooleanField(default=True)
 
     objects = RecipeManager()
-
+  
     @property
     def title(self):
         return self.name
@@ -74,6 +74,13 @@ class RecipeIngredients(models.Model):
 
     def get_absolute_url(self):
         return self.recipe.get_absolute_url()
+
+    def get_delete_url(self):
+        kwargs = {
+            'parent_id': self.recipe.id,
+            'id': self.id
+        }
+        return reverse('recipes:ingredient-delete', kwargs=kwargs)
     
     def get_hx_edit_url(self):
         kwargs = {
