@@ -3750,6 +3750,7 @@ urlpatterns = [
     path('<int:id>/', recipe_detail_view, name='detail')
 ]
 ```
+### Session 72:
 - update our delete views to handle htmx
 - let's head to recipes/views.py:
 ```python
@@ -3808,3 +3809,58 @@ def recipe_ingredient_delete_view(request, parent_id=None, id=None):
 <a href='{{obj.get_delete_url}}' hx-post="{{ obj.get_delete_url }}"
      hx-confirm="Are you sure you want to delete {{ obj.name }}?" hx-trigger="click" hx-headers='{"X-CSRFToken": "{{ csrf_token}}"}'>Delete</a>
 ```
+- now let's make it more dynamic
+- head to templates/Base.html:
+```html
+ <body>
+        {% block content %}
+        {% endblock content %}
+
+        <script>
+            document.body.addEventListener('htmx:configRequest', (event)=>{
+                event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}'
+            })
+        </script>
+
+    </body>
+```
+- head to templates/recipes/detail.html:
+```html
+    <a href='{{obj.get_delete_url}}' hx-post="{{ obj.get_delete_url }}"
+     hx-confirm="Are you sure you want to delete {{ obj.name }}?" hx-trigger="click">Delete</a>
+```
+- head to templates/recipes/partials/ingredient-inline.html:
+```html
+<a hx-post="{{ object.get_delete_url }}" hx-trigger="click" 
+    hx-confirm="Delete Ingredient?" href="{{ object.get_delete_url }}"
+    hx-target="#ingredient-{{ object.id}}" hx-swap="outerHTML">Remove</a>
+```
+- head to recipes/views.py:
+```python
+@login_required
+def recipe_ingredient_delete_view(request, parent_id=None, id=None):
+    try:
+        obj = RecipeIngredients.objects.get(recipe__id=parent_id, recipe__user=request.user, id=id)
+    except:
+        obj = None
+    if obj is None:
+        if request.htmx:
+            return HttpResponse('Not Found')
+        raise Http404
+    if request.method == 'POST': 
+        name = obj.name
+        obj.delete()
+        success_url = reverse('recipes:detail', kwargs={'id':parent_id})
+        if request.htmx:
+            return render(request, 'recipes/partials/ingredient-inline-delete-response.html', context={'name': name})
+        return redirect(success_url)
+    context = {
+        'obj':obj
+    }
+    return render(request, 'recipes/delete.html', context=context)
+```
+- and create and edit this file, templates/recipes/partials/ingredient-inline-delete-response.html:
+```html
+<span style="color: #ccc">Ingredient {{ name }} Removed</span>
+```
+- note that the last edit was just to make it more beautiful

@@ -63,13 +63,11 @@ def recipe_ingredient_delete_view(request, parent_id=None, id=None):
             return HttpResponse('Not Found')
         raise Http404
     if request.method == 'POST': 
+        name = obj.name
         obj.delete()
         success_url = reverse('recipes:detail', kwargs={'id':parent_id})
         if request.htmx:
-            headers = {
-                'HX-Redirect' : success_url
-            }
-            return HttpResponse('Success', headers=headers)
+            return render(request, 'recipes/partials/ingredient-inline-delete-response.html', context={'name': name})
         return redirect(success_url)
     context = {
         'obj':obj

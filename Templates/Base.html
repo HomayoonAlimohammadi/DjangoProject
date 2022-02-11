@@ -22,5 +22,12 @@
     <body>
         {% block content %}
         {% endblock content %}
+
+        <script>
+            document.body.addEventListener('htmx:configRequest', (event)=>{
+                event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}'
+            })
+        </script>
+
     </body>
 </html>
