@@ -3750,3 +3750,61 @@ urlpatterns = [
     path('<int:id>/', recipe_detail_view, name='detail')
 ]
 ```
+- update our delete views to handle htmx
+- let's head to recipes/views.py:
+```python
+@login_required
+def recipe_delete_view(request, id=None):
+    try:
+        obj = Recipe.objects.get(id=id, user=request.user)
+    except:
+        obj = None
+    if obj is None:
+        if request.htmx:
+            return HttpResponse('Not Found')
+        raise Http404
+    if request.method == 'POST': 
+        obj.delete()
+        success_url = reverse('recipes:list')
+        if request.htmx:
+            headers = {
+                'HX-Redirect' : success_url
+            }
+            return HttpResponse('Success', headers=headers)
+        return redirect(success_url)
+    context = {
+        'obj':obj
+    }
+    return render(request, 'recipes/delete.html', context=context)
+
+    
+
+@login_required
+def recipe_ingredient_delete_view(request, parent_id=None, id=None):
+    try:
+        obj = RecipeIngredients.objects.get(recipe__id=parent_id, recipe__user=request.user, id=id)
+    except:
+        obj = None
+    if obj is None:
+        if request.htmx:
+            return HttpResponse('Not Found')
+        raise Http404
+    if request.method == 'POST': 
+        obj.delete()
+        success_url = reverse('recipes:detail', kwargs={'id':parent_id})
+        if request.htmx:
+            headers = {
+                'HX-Redirect' : success_url
+            }
+            return HttpResponse('Success', headers=headers)
+        return redirect(success_url)
+    context = {
+        'obj':obj
+    }
+    return render(request, 'recipes/delete.html', context=context)
+```
+- and edit templates/recipes/detail.html:
+```html
+<a href='{{obj.get_delete_url}}' hx-post="{{ obj.get_delete_url }}"
+     hx-confirm="Are you sure you want to delete {{ obj.name }}?" hx-trigger="click" hx-headers='{"X-CSRFToken": "{{ csrf_token}}"}'>Delete</a>
+```
