@@ -3639,4 +3639,64 @@ class Article(models.Model):
 ```
 ## Session 72:
 - Model Object delete View in Django
+- let's work on the Delete part of the CRUD
+- head to recipes/views.py:
+```python
+
+@login_required
+def recipe_delete_view(request, id=None):
+    obj = get_object_or_404(Recipe, id=id, user=request.user)
+    if request.method == 'POST':
+        obj.delete()
+        success_url = reverse('recipes:list')
+        return redirect(success_url)
+    context = {
+        'obj':obj
+    }
+    return render(request, 'recipes/delete.html', context=context)
+```
+- let's create templates/recipes/delete.html:
+```html
+{% extends 'Base.html' %} 
+
+{% block title %}Delete Recipe{% endblock %}
+
+{% block content %}
+
+{% if obj %} 
+<form method = 'POST' action = '.'>
+    {% csrf_token %}
+    <p>Are you sure you want to delete <b>{{ obj.name }}</b></p>
+    <button type='submit'>Yes, Delete.</button>
+</form>
+{% endif %} 
+    
+{% endblock %}
+```
+- now edit recipes/urls.py:
+```python
+from recipes.views import (
+    recipe_list_view,
+    recipe_detail_view,
+    recipe_create_view,
+    recipe_update_view,
+    recipe_detail_hx_view,
+    recipe_ingredient_update_hx_view,
+    recipe_delete_view
+)
+
+# order matters, they are gonna match the order they come in. order should make sense.
+app_name = 'recipes' # recipes:list as a reverse call or recipes:create
+urlpatterns = [
+    path('', recipe_list_view, name='list'),
+    path('create/', recipe_create_view, name='create'),
+    path('hx/<int:parent_id>/ingredient/<int:id>/', recipe_ingredient_update_hx_view, name='hx-ingredient-detail'),
+    path('hx/<int:parent_id>/ingredient/', recipe_ingredient_update_hx_view, name='hx-ingredient-create'),
+    path('hx/<int:id>/', recipe_detail_hx_view, name='hx-detail'),
+    path('<int:id>/delete/', recipe_delete_view, name='delete'),
+    path('<int:id>/edit/', recipe_update_view, name='update'),
+    path('<int:id>/', recipe_detail_view, name='detail')
+]
+```
+- a nice litte '/' was causing massive problems inside the urls. make sure to mind them.
 

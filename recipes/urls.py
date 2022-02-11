@@ -17,7 +17,8 @@ urlpatterns = [
     path('hx/<int:parent_id>/ingredient/<int:id>/', recipe_ingredient_update_hx_view, name='hx-ingredient-detail'),
     path('hx/<int:parent_id>/ingredient/', recipe_ingredient_update_hx_view, name='hx-ingredient-create'),
     path('hx/<int:id>/', recipe_detail_hx_view, name='hx-detail'),
-    path('<int:id>/delete', recipe_delete_view, name='delete'),
+    path('<int:id>/delete/', recipe_delete_view, name='delete'),
     path('<int:id>/edit/', recipe_update_view, name='update'),
     path('<int:id>/', recipe_detail_view, name='detail')
 ]
+# make sure to put '/' in the end of the urls, otherwise it won't work properly.

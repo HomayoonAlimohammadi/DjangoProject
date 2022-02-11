@@ -17,6 +17,7 @@
     {% if message %}
     <h2 style='color:red;'>Data Saved!</h2>
     {% endif %} 
+    <a href='{{ obj.get_delete_url }}'>Delete</a>
     <h3><a href='../'>Back</a></h3>
 
 </form>
