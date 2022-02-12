@@ -3750,7 +3750,7 @@ urlpatterns = [
     path('<int:id>/', recipe_detail_view, name='detail')
 ]
 ```
-### Session 72:
+### Session 73:
 - update our delete views to handle htmx
 - let's head to recipes/views.py:
 ```python
@@ -3864,3 +3864,39 @@ def recipe_ingredient_delete_view(request, parent_id=None, id=None):
 <span style="color: #ccc">Ingredient {{ name }} Removed</span>
 ```
 - note that the last edit was just to make it more beautiful
+## Session 74:
+- survying static files
+- Static Files in development
+- when you are in debug mode django server static files, otherwise it won't
+- what does serving static files mean? django has built in methods to instead of returning .html files, return image files or css files, which is not recommended by django itself.
+- let's see how to use our own static files
+- we want to convert our internal stylesheets for example in templates/Base.html into external stylesheet
+- inside of recipes, create a folder called <b>static</b> exactly in this way
+- inside that folder create a folder called <b>recipes</b> and also inside that recipes-htmx.css:
+```css
+body {
+    color: red !important;
+}
+.htmx-indicator {
+    display: none;
+}
+.htmx-request .htmx-indicator {
+    display: inline;
+}
+.htmx-inverted-indicator {
+    display: inline;
+}
+.htmx-request .htmx-inverted-indicator {
+    display: none;
+}
+```
+- now let's for starters, link this stylesheet in Base.html:
+```html
+    <head>
+        <script src="https://unpkg.com/htmx.org@1.6.1"></script>
+        <link rel="stylesheet" href="/static/recipes/recipes-htmx.css" />
+
+        {% block title %}
+        {% endblock title %}
+    </head>
+```
