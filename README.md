@@ -3908,3 +3908,36 @@ STATIC_URL = '/static/'
 - if you want it to be something else you can rename it here. but it will still throw an error to you for reasons beyond the scope of this tutorial.
 - having the link line in Base.html is not sustainable, because if you ever change the setting in configuration (static_url) it would break everything. 
 - so let's do something else
+- head to Base.html:
+```html
+{% load static %} 
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="https://unpkg.com/htmx.org@1.6.1"></script>
+        <link rel="stylesheet" href="{% static 'recipes/recipes-htmx.css' %}" />
+
+        {% block title %}
+        {% endblock title %}
+    </head>
+```
+- when you work with static files, go to inspect, Network, and check the "Disable Cache".
+- if debug mode is 0 or False, django is not going to serve static files.
+- where to store static files in long term? not inside the app, inside the django project folder itself, the root of our project.
+- create static/recipes/recipes-htmx.css:
+```css
+.htmx-indicator {
+    display: none;
+}
+.htmx-request .htmx-indicator {
+    display: inline;
+}
+.htmx-inverted-indicator {
+    display: inline;
+}
+.htmx-request .htmx-inverted-indicator {
+    display: none;
+}
+```
+- this will overwrite the statics in 3rd party apps in django, remember to use the exact same path!
