@@ -3900,3 +3900,11 @@ body {
         {% endblock title %}
     </head>
 ```
+- if the folder <b>static</b> was named something else it would cause an error.
+- head to TryDjango/settings.py and check out the very bottom of the page:
+```python
+STATIC_URL = '/static/'
+```
+- if you want it to be something else you can rename it here. but it will still throw an error to you for reasons beyond the scope of this tutorial.
+- having the link line in Base.html is not sustainable, because if you ever change the setting in configuration (static_url) it would break everything. 
+- so let's do something else
