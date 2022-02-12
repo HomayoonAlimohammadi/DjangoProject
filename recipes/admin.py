@@ -1,10 +1,10 @@
 from django.contrib.auth import get_user_model
 from django.contrib import admin
-from recipes.models import Recipe, RecipeIngredients
+from recipes.models import Recipe, RecipeIngredients, RecipeIngredientsImage
 
 admin.site.register(RecipeIngredients)
 User = get_user_model()
-
+admin.site.register(RecipeIngredientsImage)
 
 class RecipeIngredientInline(admin.StackedInline):
     model = RecipeIngredients

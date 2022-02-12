@@ -5,6 +5,8 @@ from recipes.utils import number_str_to_float
 import pint
 from django.urls import reverse
 from django.db.models import Q
+import pathlib
+import uuid
 
 # Create your models here.
 
@@ -58,6 +60,19 @@ class Recipe(models.Model):
     
     def get_ingredients_children(self):
         return self.recipeingredients_set.all()
+
+
+def recipe_ingredient_image_upload_handler(instance, filename):
+    fpath = pathlib.Path(filename)
+    new_fname = str(uuid.uuid1()) # uuid1 -> uuid + timestamps
+    return f'recipes/{new_fname}{fpath.suffix}'
+
+
+class RecipeIngredientsImage(models.Model):
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    image = models.ImageField(upload_to=recipe_ingredient_image_upload_handler) # path/to/actual/files.png, remember to exclude '/' in the beginning
+    # image
+    # extracted_text
 
 class RecipeIngredients(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)

@@ -168,6 +168,8 @@ STATICFILES_DIRS = [
 
 STATIC_ROOT = BASE_DIR / 'staticfiles-cdn' # in production we want cdn (content delivery network) to serve our static files
 
+MEDIA_ROOT = BASE_DIR / 'staticfiles-cdn' / 'uploads'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 

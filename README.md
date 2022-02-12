@@ -3953,5 +3953,56 @@ STATIC_ROOT = BASE_DIR / 'staticfiles-cdn' # in production we want cdn (content 
 - Django Static Files in Production
 - essentially all we try to do here is to referrence the stylesheet with link href='...'" to an online repository like digital ocean
 - in other words our {% load static %} won't give us /static/recipes/recipes-htmx.css but it would give a url which is private.
- 
+## Session 76: 
+- Handle Files and Images
+- let's make another model in the recipes which contains the Recipe Ingredients Images
+- head to recipes/models.py:
+```python
+class RecipeIngredientsImages(models.Model):
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    image = models.FileField(upload_to='recipes/') # path/to/actual/files.png, remember to exclude '/' in the beginning
+    # image
+    # extracted_text
+```
+- now head to TryDjango/settings.py:
+```python
+MEDIA_ROOT = BASE_DIR / 'staticfiles-cdn' / 'uploads'
+```
+- and head to recipes/admin.py:
+```python
+from recipes.models import Recipe, RecipeIngredients, RecipeIngredientsImage
+admin.site.register(RecipeIngredientsImage)
+```
+- now you can see in the directory: staticfiles-cdn/uploads/recipes/Me.png
+- let's try this out with Python Image Library or PIL (pillow):
+```shell
+pip install pillow
+```
+- now we want to use models.ImageField instead of models.FileField
+- essentially the only difference between two is that ImageField validates if the file is actually an image.
+- update recipes/models.py:
+```python
+class RecipeIngredientsImages(models.Model):
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='recipes/') # path/to/actual/files.png, remember to exclude '/' in the beginning
+    # image
+    # extracted_text
+```
+- if we try to upload something else than image, it won't let us
+- let's make a way to change the file name while uploading it
+- head to recipes/models.py:
+```python
+def recipe_ingredient_image_upload_handler(instance, filename):
+    fpath = pathlib.Path(filename)
+    new_fname = str(uuid.uuid1()) # uuid1 -> uuid + timestamps
+    return f'recipes/{new_fname}{fpath.suffix}'
+
+
+class RecipeIngredientsImage(models.Model):
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    image = models.ImageField(upload_to=recipe_ingredient_image_upload_handler) # path/to/actual/files.png, remember to exclude '/' in the beginning
+    # image
+    # extracted_text
+```
+- if you upload the exact samething again, it will give you another random each and every time
 
