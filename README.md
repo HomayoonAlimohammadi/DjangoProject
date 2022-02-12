@@ -3941,3 +3941,17 @@ STATIC_URL = '/static/'
 }
 ```
 - this will overwrite the statics in 3rd party apps in django, remember to use the exact same path!
+- let's discuss what happens in production, it will something like this
+```python
+python manage.py collectstatic
+```
+- first we have to setup a STATIC_ROOT folder, in the TryDjango/settings.py:
+```python
+STATIC_ROOT = BASE_DIR / 'staticfiles-cdn' # in production we want cdn (content delivery network) to serve our static files
+```
+## Session 75:
+- Django Static Files in Production
+- essentially all we try to do here is to referrence the stylesheet with link href='...'" to an online repository like digital ocean
+- in other words our {% load static %} won't give us /static/recipes/recipes-htmx.css but it would give a url which is private.
+ 
+
