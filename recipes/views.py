@@ -3,7 +3,7 @@ from django.urls import reverse
 from recipes.models import Recipe, RecipeIngredients
 from django.contrib.auth.decorators import login_required
 from django.forms.models import modelformset_factory # ModelForm for querysets
-from recipes.forms import RecipeForm, RecipeIngredientsForm
+from recipes.forms import RecipeForm, RecipeIngredientsForm, RecipeIngredientsImageForm
 from django.http import HttpResponse 
 from django.http import Http404
 # CRUD -> Create Retrieve Update and Delete
@@ -167,3 +167,16 @@ def recipe_ingredient_update_hx_view(request, parent_id=None, id=None):
         return render(request, 'recipes/partials/ingredient-inline.html', context=context)
 
     return render(request, 'recipes/partials/ingredient-form.html', context=context)
+
+
+
+def recipe_ingredient_image_upload_view(request, parent_id):
+    form = RecipeIngredientsImageForm(request.POST or None, request.FILES or None)
+    if form.is_valid():
+        obj = form.save(commit = False)
+        obj.recipe = parent_id
+        obj.save()
+    context = {
+        'form': form
+    }
+    return render(request, 'image-form.html', context = context)

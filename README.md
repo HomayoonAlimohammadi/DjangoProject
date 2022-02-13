@@ -4005,4 +4005,77 @@ class RecipeIngredientsImage(models.Model):
     # extracted_text
 ```
 - if you upload the exact samething again, it will give you another random each and every time
+## Session 77:
+- View for Handling File or Image Uploads
+- let's create a form that gets image files from the user
+- first head to recipes/forms.py:
+```python
+from recipes.models import Recipe, RecipeIngredients, RecipeIngredientsImage
 
+
+class RecipeIngredientsImageForm(forms.ModelForm):
+    class Meta:
+        model = RecipeIngredientsImage
+        fields = ['image']
+```
+- now head to recipes/views.py:
+```python
+from recipes.forms import RecipeForm, RecipeIngredientsForm, RecipeIngredientsImageForm
+
+def recipe_ingredient_image_upload_view(request, parent_id):
+    form = RecipeIngredientsImageForm(request.POST or None, request.FILES or None)
+    if form.is_valid():
+        obj = form.save(commit = False)
+        obj.recipe = parent_id
+        obj.save()
+    context = {
+        'form': form
+    }
+    return render(request, 'image-form.html', context = context)
+```
+- now head to recipes/urls.py:
+```python
+from recipes.views import (
+    recipe_list_view,
+    recipe_detail_view,
+    recipe_create_view,
+    recipe_update_view,
+    recipe_detail_hx_view,
+    recipe_ingredient_update_hx_view,
+    recipe_delete_view,
+    recipe_ingredient_delete_view,
+    recipe_ingredient_image_upload_view
+)
+
+urlpatterns = [
+    path('', recipe_list_view, name='list'),
+    path('create/', recipe_create_view, name='create'),
+    path('hx/<int:parent_id>/ingredient/<int:id>/', recipe_ingredient_update_hx_view, name='hx-ingredient-detail'),
+    path('hx/<int:parent_id>/ingredient/', recipe_ingredient_update_hx_view, name='hx-ingredient-create'),
+    path('hx/<int:id>/', recipe_detail_hx_view, name='hx-detail'),
+    path('<int:parent_id>/image-upload/', recipe_ingredient_image_upload_view),
+    path('<int:parent_id>/ingredient/<int:id>/delete/', recipe_ingredient_delete_view, name='ingredient-delete'),
+    path('<int:id>/delete/', recipe_delete_view, name='delete'),
+    path('<int:id>/edit/', recipe_update_view, name='update'),
+    path('<int:id>/', recipe_detail_view, name='detail')
+]
+```
+- now let's create a .html file in the root of our templates
+- head to Templates/image-form.html:
+```html
+{% extends 'Base.html' %}
+
+{% block content %}
+
+<form action='.' method='POST'>
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <button type='submit'>Upload Image</button>
+</form>
+
+{% endblock %}
+```
+- now it is working, shows the field to upload image, but after hitting the button (submitting) nothing happens.
+- it's because the form is not passing any file to the view. 
+- since the request.FILES is an empty dictionary
