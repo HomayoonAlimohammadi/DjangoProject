@@ -73,6 +73,10 @@ class RecipeIngredientsImage(models.Model):
     image = models.ImageField(upload_to=recipe_ingredient_image_upload_handler) # path/to/actual/files.png, remember to exclude '/' in the beginning
     # image
     # extracted_text
+    '''
+    Implement this extracted column to your database in case your ocr api is working.
+    '''
+    # extracted = models.JSONField(blank=True, null=True)
 
 class RecipeIngredients(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)

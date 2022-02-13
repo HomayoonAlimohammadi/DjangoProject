@@ -4167,3 +4167,55 @@ hx-post="{{ request.path }}" hx-encoding="'multipart/form-data">
 </script>
 ```
 - Voila!
+## Session 79:
+- let's implement a machine learning analysis algorithm for our website.
+- let's use a 3rd party microservice api that we control
+- let's create recipes/services.py:
+```python
+import requests
+import os
+
+from django.core.files import File
+
+OCR_API_TOKEN_HEADERS = os.environ.get('OCR_API_TOKEN_HEADERS')
+OCR_API_ENDPOINT = os.environ.get('OCR_API_ENDPOINT')
+
+def extract_text_via_ocr_service(file_obj: File=None):
+    data = {}
+    if OCR_API_ENDPOINT is None:
+        return data
+    if OCR_API_TOKEN_HEADERS is None:
+        return data
+    if file_obj is None:
+        return data
+    # get image 
+    # send image through HTTP POST
+    # return dict {}
+    headers = {
+        'Authorization': f'Bearer {OCR_API_TOKEN_HEADERS}'
+    }
+    with file_obj.open('rb') as f:
+        r = requests.post(OCR_API_ENDPOINT, files={'file': f}, headers=headers)
+        if r.status_code in range(200, 299):
+            if r.headers.get('content-type') == 'application/json':
+                data = r.json()
+    return data
+```
+- now head to recipes/views.py:
+```python
+result = extract_text_via_ocr_service(obj.image)
+obj.extracted = result
+```
+- and in the recipes/models.py:
+```python
+class RecipeIngredientsImage(models.Model):
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    image = models.ImageField(upload_to=recipe_ingredient_image_upload_handler) # path/to/actual/files.png, remember to exclude '/' in the beginning
+    # image
+    # extracted_text
+    '''
+    Implement this extracted column to your database in case your ocr api is working.
+    '''
+    extracted = models.JSONField(blank=True, null=True)
+```
+- celery is something to delay some parts of our project in order to prevent crashes.

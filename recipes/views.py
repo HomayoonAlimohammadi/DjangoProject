@@ -6,6 +6,8 @@ from django.forms.models import modelformset_factory # ModelForm for querysets
 from recipes.forms import RecipeForm, RecipeIngredientsForm, RecipeIngredientsImageForm
 from django.http import HttpResponse 
 from django.http import Http404
+from recipes.services import extract_text_via_ocr_service
+
 # CRUD -> Create Retrieve Update and Delete
 # FVB -> CBV | function based view VS class based view
 # CVB prevents redundant code
@@ -186,6 +188,8 @@ def recipe_ingredient_image_upload_view(request, parent_id):
         obj.recipe = parent_obj
         # obj.recipe_id = parent_id
         obj.save()
+        # result = extract_text_via_ocr_service(obj.image)
+        # obj.extracted = result
     context = {
         'form': form
     }
