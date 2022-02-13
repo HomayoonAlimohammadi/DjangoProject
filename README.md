@@ -4109,3 +4109,61 @@ def recipe_ingredient_image_upload_view(request, parent_id):
     }
     return render(request, 'image-form.html', context = context)
 ```
+## Session 78:
+- Uploading Files with Django HTMX
+- let's head to recipes/views.py:
+```python
+def recipe_ingredient_image_upload_view(request, parent_id):
+    template_name = 'recipes/upload-image.html'
+    if request.htmx:
+        template_name = 'recipes/partials/image-upload-form.html'
+    form = RecipeIngredientsImageForm(request.POST or None, request.FILES or None)
+    try:
+        parent_obj = Recipe.objects.get(id=parent_id, user=request.user)
+    except:
+        parent_obj = None
+    if parent_obj is None:
+        raise Http404
+    if form.is_valid():
+        obj = form.save(commit = False)
+        obj.recipe = parent_obj
+        # obj.recipe_id = parent_id
+        obj.save()
+    context = {
+        'form': form
+    }
+    return render(request, template_name, context = context)
+```
+- let's create Templates/recipes/partials/image-upload-form.html:
+```html
+<form  id="image-upload-form" action='.' method='POST' enctype="multipart/form-data"
+hx-post="{{ request.path }}" hx-encoding="'multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <div>
+        <progress id="image-upload-progress" value="0" max="100"></progress>
+    </div>
+
+    <button type='submit'>Upload Image</button>
+</form>
+```
+- now let's create templates/recipes/upload-image.html:
+```html
+{% extends 'Base.html' %}
+
+{% block content %}
+
+{% include 'recipes/partials/image-upload-form.html' %} 
+
+{% endblock %}
+```
+- let's add a progress bar, so in the templates/recipes/partials/image-upload-form.html, add this:
+```html
+<script>
+    htmx.on('#image-upload-form', 'htmx:xhr:progress', function(evt) {
+        htmx.find('#image-upload-progress').setAttribute('value', evt.detail.loaded/evt.detail.total * 100)
+    });
+</script>
+```
+- Voila!
