@@ -4079,3 +4079,33 @@ urlpatterns = [
 - now it is working, shows the field to upload image, but after hitting the button (submitting) nothing happens.
 - it's because the form is not passing any file to the view. 
 - since the request.FILES is an empty dictionary
+- so head to the Templates/image-form.html:
+```html
+<form action='.' method='POST' enctype="'multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <button type='submit'>Upload Image</button>
+</form>
+```
+- and then let's update the views as well, in the recipes/views.py:
+```python
+
+def recipe_ingredient_image_upload_view(request, parent_id):
+    form = RecipeIngredientsImageForm(request.POST or None, request.FILES or None)
+    try:
+        parent_obj = Recipe.objects.get(id=parent_id, user=request.user)
+    except:
+        parent_obj = None
+    if parent_obj is None:
+        raise Http404
+    if form.is_valid():
+        obj = form.save(commit = False)
+        obj.recipe = parent_obj
+        # obj.recipe_id = parent_id
+        obj.save()
+    context = {
+        'form': form
+    }
+    return render(request, 'image-form.html', context = context)
+```
