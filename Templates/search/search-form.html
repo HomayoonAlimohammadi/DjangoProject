@@ -1,6 +1,6 @@
 <div>
-    <form action='/search/' method='GET'>
-        <select name='type' id='search-type'>
+    <form action='/search/' method='GET' class="d-flex">
+        <select class = 'form-control' name='type' id='search-type'>
             <!-- {% if request.GET.type == 'all' %} 
                 <option value='all' selected>All</option>
             {% else %} 
@@ -14,12 +14,12 @@
             {% if request.GET.type == 'recipes' %} 
                 <option value='recipes' selected>Recipes</option>
             {% else %} 
-                <option value='recipes'>Recipes</option>
+                <option value='recipes' selected>Recipes</option>
             {% endif %}
             
         </select>
-        <input type='text' id='search-query' name='q' value='{{request.GET.q}}' hx-get='/search/' hx-trigger='keyup changed delay:200ms' hx-include='#search-type' hx-target='#typeahead-results'/>
-        <input type='submit' />
+        <input class='form-control me-2' type='text' id='search-query' name='q' value='{{request.GET.q}}' hx-get='/search/' hx-trigger='keyup changed delay:200ms' hx-include='#search-type' hx-target='#typeahead-results'/>
+        <button class="btn btn-outline-success" type="submit">Search</button>
     </form>
     <div id='typeahead-results'>
 

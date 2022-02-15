@@ -4219,3 +4219,147 @@ class RecipeIngredientsImage(models.Model):
     extracted = models.JSONField(blank=True, null=True)
 ```
 - celery is something to delay some parts of our project in order to prevent crashes.
+## Session 86:
+- Introduction to Bootstrap
+- first checkout bootstrap and then head to the Docs
+- from there, find "Starter Template" and copy the code
+- in the templates/Base.html:
+```html
+<head>
+
+        <!-- Required meta tags -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <!-- Bootstrap CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+
+
+        <script src="https://unpkg.com/htmx.org@1.6.1"></script>
+        <link rel="stylesheet" href="{% static 'recipes/recipes-htmx.css' %}" />
+        
+        
+        {% block title %}
+        {% endblock title %}
+    </head>
+```
+- now let's add a Navigator Bar to our page. 
+- head to Nav bar in Bootstrap and look for the code.
+- create Project/base/navbar.html, copy the content in there and edit as follows
+```html
+<nav class="navbar navbar-expand-lg navbar-light bg-light mb-3">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">Navbar</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="#">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Link</a>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Dropdown
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+              <li><a class="dropdown-item" href="#">Action</a></li>
+              <li><a class="dropdown-item" href="#">Another action</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="#">Something else here</a></li>
+            </ul>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link disabled">Disabled</a>
+          </li>
+        </ul>
+        {% if request.user.is_authenticated %}
+        {% include 'search/search-form.html' %}
+        {% endif %}
+        
+      </div>
+    </div>
+  </nav>
+```
+- now head to the templates/Base.html:
+```html
+<head>
+
+        <!-- Required meta tags -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <!-- Bootstrap CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+
+
+        <script src="https://unpkg.com/htmx.org@1.6.1"></script>
+        <link rel="stylesheet" href="{% static 'recipes/recipes-htmx.css' %}" />
+        
+        
+        {% include 'base/navbar.html' %} 
+
+        {% block title %}
+        {% endblock title %}
+    </head>
+```
+- head to the templates/search/search-form.html
+```html
+<div>
+    <form action='/search/' method='GET' class="d-flex">
+        <select class = 'form-control' name='type' id='search-type'>
+            <!-- {% if request.GET.type == 'all' %} 
+                <option value='all' selected>All</option>
+            {% else %} 
+                <option value='all'>All</option>
+            {% endif %} -->
+            {% if request.GET.type == 'articles' %} 
+                <option value='articles' selected>Articles</option>
+            {% else %} 
+                <option value='articles'>Articles</option>
+            {% endif %}
+            {% if request.GET.type == 'recipes' %} 
+                <option value='recipes' selected>Recipes</option>
+            {% else %} 
+                <option value='recipes' selected>Recipes</option>
+            {% endif %}
+            
+        </select>
+        <input class='form-control me-2' type='text' id='search-query' name='q' value='{{request.GET.q}}' hx-get='/search/' hx-trigger='keyup changed delay:200ms' hx-include='#search-type' hx-target='#typeahead-results'/>
+        <button class="btn btn-outline-success" type="submit">Search</button>
+    </form>
+    <div id='typeahead-results'>
+
+    </div>
+</div>
+```
+- head to the templates/recipes/create-update.html:
+```html
+
+<div style='margin-top:30px;' class="row">
+    <div class="{% if obj.id %} col-12 col-md-8 {% else %} col-md-6 mx-auto{% endif %}">
+        {% if not obj.id %}
+            <h1>Create Recipe</h1>
+        {% endif %}       
+        {% include 'recipes/partials/forms.html' %}
+    </div>
+
+    <div class="{% if obj.id %} col-12 col-md-4 {% else %} d-none {% endif %}">
+        <h3>Ingredients</h3>
+        {% for ingredient in obj.get_ingredients_children %} 
+            {% include 'recipes/partials/ingredient-inline.html' with object=ingredient %} 
+        {% endfor %}
+        {% if new_ingredient_url %}
+        <div id='ingredient-create'>
+
+        </div>
+        <button hx-get='{{ new_ingredient_url }}' hx-trigger='click' hx-target='#ingredient-create' hx-swap='beforeend'>Add Ingredient</button>
+
+        {% endif %}
+        </div>
+</div>
+```
+- now our page has a nicer look to it. don't forget to checkout bootstrap for more awesome things!
