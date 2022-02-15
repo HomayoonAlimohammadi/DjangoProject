@@ -34,6 +34,9 @@
         <button hx-get='{{ new_ingredient_url }}' hx-trigger='click' hx-target='#ingredient-create' hx-swap='beforeend'>Add Ingredient</button>
 
         {% endif %}
+        <p>Upload your Desired Image for this Recipe and Ingredients:</p>
+        {% include 'recipes/partials/image-upload-form.html' %}
+
         </div>
 </div>
 <script>

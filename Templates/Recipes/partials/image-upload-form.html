@@ -1,7 +1,7 @@
 <form  id="image-upload-form" action='.' method='POST' enctype="multipart/form-data"
 hx-post="{{ request.path }}" hx-encoding="'multipart/form-data">
     {% csrf_token %}
-    {{ form.as_p }}
+    {{ image_form.as_p }}
 
     <div>
         <progress id="image-upload-progress" value="0" max="100"></progress>

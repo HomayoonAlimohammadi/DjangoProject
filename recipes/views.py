@@ -130,6 +130,27 @@ def recipe_update_view(request, id=None):
     if form.is_valid():
         form.save()
         context['message'] = True
+
+    ### Adding Image Form:
+    form_2 = RecipeIngredientsImageForm(request.POST or None, request.FILES or None)
+    try:
+        parent_obj = Recipe.objects.get(id=id, user=request.user)
+    except:
+        parent_obj = None
+    if parent_obj is None:
+        raise Http404
+    if form_2.is_valid():
+        obj_2 = form_2.save(commit = False)
+        obj_2.recipe = parent_obj
+        # obj.recipe_id = parent_id
+        obj_2.save()
+        # result = extract_text_via_ocr_service(obj.image)
+        # obj.extracted = result
+    context['image_form'] = form_2
+
+    ###
+
+
     if request.htmx:
         return render(request, 'recipes/partials/forms.html', context)
     return render(request, 'recipes/create-update.html', context=context)
@@ -191,6 +212,6 @@ def recipe_ingredient_image_upload_view(request, parent_id):
         # result = extract_text_via_ocr_service(obj.image)
         # obj.extracted = result
     context = {
-        'form': form
+        'image_form': form
     }
-    return render(request, template_name, context = context)
+    return render(request, template_name, context = context) 

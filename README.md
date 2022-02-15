@@ -4219,7 +4219,7 @@ class RecipeIngredientsImage(models.Model):
     extracted = models.JSONField(blank=True, null=True)
 ```
 - celery is something to delay some parts of our project in order to prevent crashes.
-## Session 86:
+## Session 85:
 - Introduction to Bootstrap
 - first checkout bootstrap and then head to the Docs
 - from there, find "Starter Template" and copy the code
@@ -4363,3 +4363,189 @@ class RecipeIngredientsImage(models.Model):
 </div>
 ```
 - now our page has a nicer look to it. don't forget to checkout bootstrap for more awesome things!
+## Session 86:
+- make a Meal Queue
+- let's create a meals app:
+```shell
+python manage.py startapp meals
+```
+- head to meals/models.py:
+```python
+from django.db import models
+from django.conf import settings
+from recipes.models import Recipe
+
+'''
+Meal 
+- Pending
+- Completed
+- Expired
+- Aborted
+
+'''
+
+User = settings.AUTH_USER_MODEL
+
+class MealStatus(models.TextChoices):
+    PENDING = 'p', 'Pending'
+    COMPLETED = 'c', 'Completed'
+    EXPIRED = 'e', 'Expired'
+    ABORTED = 'a', 'Aborted'
+
+
+
+class MealQuerySet(models.QuerySet):
+    def by_user_id(self, user_id):
+        return self.filter(user_id=user_id)
+
+    def by_user(self, user):
+        return self.filter(user=user)
+
+    def pending(self):
+        return self.filetr(status=MealStatus.PENDING)
+    
+    def completed(self):
+        return self.filetr(status=MealStatus.COMPLETED)
+
+    def expired(self):
+        return self.filetr(status=MealStatus.EXPIRED)
+
+    def aborted(self):
+        return self.filetr(status=MealStatus.ABORTED)
+
+class MealManager(models.Manager):
+    def get_queryset(self):
+        return MealQuerySet(self.model, using=self._db)
+
+class Meal(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    status = models.CharField(max_length=1, choices=MealStatus.choices, default=MealStatus.PENDING)
+
+    objects = MealManager()
+```
+- head to meals/admin.py:
+```python
+from django.contrib import admin
+from .models import Meal
+# Register your models here.
+
+admin.site.register(Meal)
+```
+- head to TryDjango/settings.py:
+```python
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'django_htmx',
+    'articles',
+    'meals',
+    'recipes',
+    'search',
+]
+```
+- and let's make the image upload form visible inside our recipe create-update view:
+- let's head to recipes/views.py:
+```python
+def recipe_ingredient_image_upload_view(request, parent_id):
+    template_name = 'recipes/upload-image.html'
+    if request.htmx:
+        template_name = 'recipes/partials/image-upload-form.html'
+    form = RecipeIngredientsImageForm(request.POST or None, request.FILES or None)
+    try:
+        parent_obj = Recipe.objects.get(id=parent_id, user=request.user)
+    except:
+        parent_obj = None
+    if parent_obj is None:
+        raise Http404
+    if form.is_valid():
+        obj = form.save(commit = False)
+        obj.recipe = parent_obj
+        # obj.recipe_id = parent_id
+        obj.save()
+        # result = extract_text_via_ocr_service(obj.image)
+        # obj.extracted = result
+    context = {
+        'image_form': form
+    }
+    return render(request, template_name, context = context) 
+
+
+@login_required
+def recipe_update_view(request, id=None):
+    obj = get_object_or_404(Recipe, id=id, user=request.user)
+    form = RecipeForm(request.POST or None, instance=obj)
+    new_ingredient_url = reverse('recipes:hx-ingredient-create', kwargs={'parent_id': id}) 
+    context = {
+        'form':form,
+        'obj':obj,
+        'new_ingredient_url':new_ingredient_url
+    }
+    if form.is_valid():
+        form.save()
+        context['message'] = True
+
+    ### Adding Image Form:
+    form_2 = RecipeIngredientsImageForm(request.POST or None, request.FILES or None)
+    try:
+        parent_obj = Recipe.objects.get(id=id, user=request.user)
+    except:
+        parent_obj = None
+    if parent_obj is None:
+        raise Http404
+    if form_2.is_valid():
+        obj_2 = form_2.save(commit = False)
+        obj_2.recipe = parent_obj
+        # obj.recipe_id = parent_id
+        obj_2.save()
+        # result = extract_text_via_ocr_service(obj.image)
+        # obj.extracted = result
+    context['image_form'] = form_2
+
+    ###
+
+
+    if request.htmx:
+        return render(request, 'recipes/partials/forms.html', context)
+    return render(request, 'recipes/create-update.html', context=context)
+```
+- let's go to templates/recipes/create-update.html:
+```html
+<div style='margin-top:30px;' class="row">
+    <div class="{% if obj.id %} col-12 col-md-8 {% else %} col-md-6 mx-auto{% endif %}">
+        {% if not obj.id %}
+            <h1>Create Recipe</h1>
+        {% endif %}       
+        {% include 'recipes/partials/forms.html' %}
+    </div>
+
+    <div class="{% if obj.id %} col-12 col-md-4 {% else %} d-none {% endif %}">
+        <h3>Ingredients</h3>
+        {% for ingredient in obj.get_ingredients_children %} 
+            {% include 'recipes/partials/ingredient-inline.html' with object=ingredient %} 
+        {% endfor %}
+        {% if new_ingredient_url %}
+        <div id='ingredient-create'>
+
+        </div>
+        <button hx-get='{{ new_ingredient_url }}' hx-trigger='click' hx-target='#ingredient-create' hx-swap='beforeend'>Add Ingredient</button>
+
+        {% endif %}
+        <p>Upload your Desired Image for this Recipe and Ingredients:</p>
+        {% include 'recipes/partials/image-upload-form.html' %}
+
+        </div>
+</div>
+```
+- let's head to templates/recipes/partials/image-upload-form.html and just do a minor tweak:
+```html
+    {{ image_form.as_p }}
+```
+- and there we have it!
+
