@@ -1,5 +1,5 @@
 <form  id="image-upload-form" action='.' method='POST' enctype="multipart/form-data"
-hx-post="{{ request.path }}" hx-encoding="'multipart/form-data">
+hx-post="{{ request.path }}" hx-encoding="multipart/form-data">
     {% csrf_token %}
     {{ image_form.as_p }}
 

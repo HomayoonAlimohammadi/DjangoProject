@@ -7,8 +7,15 @@
 
 {% block content %} 
 <h3>{{content}}</h3>
+<hr/>
 <p>{% for x in object_list %}
-<li><a href='{{ x.get_absolute_url }}'>{{ x.name }}</a></li>
+<div class="mb-3">
+    <a class='lead' href='{{ x.get_absolute_url }}'>{{ x.name }}</a>
+    <div hx-get="{% url 'meal-toggle' recipe_id=x.id %}" hx-trigger="revealed">
+
+    </div>
+
+</div>
 {% endfor %}
 </p>
 

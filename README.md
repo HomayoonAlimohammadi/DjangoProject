@@ -4722,4 +4722,115 @@ class MealTestCase(TestCase):
 ```shell
 python manage.py test meals
 ```
+## Session 88:
+- Adding View for Meals Queue
+- head to meals/views.py:
+```python
+from django.shortcuts import render
+from django.http import HttpResponseBadRequest, HttpResponse
+from recipes.models import Recipe
+from .models import Meal
 
+def meal_queue_toggle_view(request, recipe_id=None):
+    if not request.htmx:
+        return HttpResponseBadRequest()
+    user = request.user
+    user_id = None
+    if not user.is_authenticated:
+        return HttpResponse('Must be logged in.', status=400)
+    user_id = user.id
+    if user_id is None:
+        return 
+    if request.method == 'POST':
+        is_valid_recipe = False
+        try:
+            recipe_obj = Recipe.objects.get(user=user, id=recipe_id)
+            is_valid_recipe = True
+        except:
+            pass
+        if is_valid_recipe:
+            Meal.objects.toggle_in_queue(user_id, recipe_id)
+    
+    is_pending = Meal.objects.by_user_id(user_id).in_queue(recipe_id)
+    toggle_label = 'Add to Meals' if not is_pending else 'Remove from Meals'
+    context = {
+        'recipe_id': recipe_id,
+        'toggle_label': toggle_label,
+        'is_pending': is_pending
+    }
+    return render(request, 'meals/partials/queue-toggle.html', context=context)
+```
+- make Templates/meals/partials/queue-toggle.html:
+```html
+<form  action='.' 
+method='POST' 
+enctype="multipart/form-data"
+hx-post="{% url 'meal-toggle' recipe_id=recipe_id %}" 
+hx-encoding="multipart/form-data">
+    {% csrf_token %}
+<button type='submit' class="btn {% if is_pending %} btn-outline-secondary {% else %} btn-primary {% endif %}">{{ toggle_label }}</button>
+```
+- in the templates/recipes/partials/image-upload-form.html:
+```html
+<form  id="image-upload-form" action='.' method='POST' enctype="multipart/form-data"
+hx-post="{{ request.path }}" hx-encoding="multipart/form-data">
+    {% csrf_token %}
+    {{ image_form.as_p }}
+
+    <div>
+        <progress id="image-upload-progress" value="0" max="100"></progress>
+    </div>
+
+    <button type='submit'>Upload Image</button>
+</form>
+
+<script>
+    htmx.on('#image-upload-form', 'htmx:xhr:progress', function(evt) {
+        htmx.find('#image-upload-progress').setAttribute('value', evt.detail.loaded/evt.detail.total * 100)
+    });
+</script>
+```
+- in the templates/recipes/list.html:
+```html
+{% extends 'Base.html' %}
+
+{% block title %}
+<h1>My Recipes</h1>
+<h3><a href='{% url "recipes:create" %}'>Add Recipe</a></h3>
+{% endblock title %}
+
+{% block content %} 
+<h3>{{content}}</h3>
+<hr/>
+<p>{% for x in object_list %}
+<div class="mb-3">
+    <a class='lead' href='{{ x.get_absolute_url }}'>{{ x.name }}</a>
+    <div hx-get="{% url 'meal-toggle' recipe_id=x.id %}" hx-trigger="revealed">
+
+    </div>
+
+</div>
+{% endfor %}
+</p>
+
+
+<h3><a href='../../'>Back to Home</a></h3>
+{% endblock content %}
+```
+- and finally in the TryDjango/urls.py:
+```python
+from meals.views import meal_queue_toggle_view
+urlpatterns = [
+    path('', HomeView), #index / home/ root
+    path('pantry/recipes/', include('recipes.urls')), # include('recipes.urls') is the path to app and it's urls.py
+    # The orders are so important, but why and how?
+    path('articles/', include('articles.urls')),
+    path('meal-toggle/<int:recipe_id>/', meal_queue_toggle_view, name='meal-toggle'),
+    path('search/', search_view, name='search'),
+    path('admin/', admin.site.urls),
+    path('login/', login_view),
+    path('logout/', logout_view),
+    path('register/', register_view)
+]
+```
+- now with htmx and bootstrap you can have an interactive and vibrant view for Meal Queue.

@@ -17,6 +17,7 @@ from django.contrib import admin
 from django.urls import path, include
 
 from .views import HomeView
+from meals.views import meal_queue_toggle_view
 
 from accounts.views import (
     login_view,
@@ -32,6 +33,7 @@ urlpatterns = [
     path('pantry/recipes/', include('recipes.urls')), # include('recipes.urls') is the path to app and it's urls.py
     # The orders are so important, but why and how?
     path('articles/', include('articles.urls')),
+    path('meal-toggle/<int:recipe_id>/', meal_queue_toggle_view, name='meal-toggle'),
     path('search/', search_view, name='search'),
     path('admin/', admin.site.urls),
     path('login/', login_view),
