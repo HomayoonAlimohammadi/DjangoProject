@@ -4834,3 +4834,4 @@ urlpatterns = [
 ]
 ```
 - now with htmx and bootstrap you can have an interactive and vibrant view for Meal Queue.
+# The End!
